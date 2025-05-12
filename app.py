@@ -56,6 +56,42 @@ def auth():
 def dashboard():
     return render_template('dashboard.html')
 
+@app.route('/api/decks/<int:deck_id>', methods=['DELETE'])
+@login_required
+def api_delete_deck(deck_id):
+    user_id = session['user_id']
+    cur = mysql.connection.cursor()
+    try:
+        # Verify user owns the deck
+        cur.execute("SELECT id FROM decks WHERE id = %s AND user_id = %s", (deck_id, user_id))
+        deck = cur.fetchone()
+
+        if not deck:
+            return jsonify(success=False, errors={'deck': 'Deck not found or access denied'}), 404
+
+        # Delete the deck. ON DELETE CASCADE in the database schema should
+        # handle deleting related entries in deck_tags, flashcards, etc.
+        # Deleting flashcards should cascade to notes and review_logs.
+        cur.execute("DELETE FROM decks WHERE id = %s", (deck_id,))
+        mysql.connection.commit()
+
+        if cur.rowcount > 0:
+            # Return the deleted deck ID so frontend can remove the card
+            return jsonify(success=True, message='Deck deleted successfully', deleted_deck_id=deck_id)
+        else:
+             # Should not happen if the deck was found, but a safeguard
+            return jsonify(success=False, message='Deck could not be deleted or was already deleted'), 400
+
+    except Exception as e:
+        mysql.connection.rollback()
+        print(f"Error deleting deck {deck_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
+    finally:
+        cur.close()
+
+
 @app.route('/api/stats/dashboard', methods=['GET'])
 @login_required
 def api_get_dashboard_stats():
