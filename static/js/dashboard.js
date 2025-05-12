@@ -1,5 +1,6 @@
 // static/js/dashboard.js
 document.addEventListener("DOMContentLoaded", () => {
+  // DOM Elements
   const decksGrid = document.querySelector(".decks-grid");
   const statsTotalDecksElement = document.querySelector(".stats-grid .stat-card:nth-child(1) .stat-info p");
   const statsCardsMasteredElement = document.querySelector(".stats-grid .stat-card:nth-child(2) .stat-info p");
@@ -7,23 +8,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let activeMenuButton = null; // To keep track of the button that opened the menu
 
-      function escapeHtml(unsafe) {
-        if (typeof unsafe !== 'string') return '';
-        return unsafe
-             .replace(/&/g, "&")
-             .replace(/</g, "<")
-             .replace(/>/g, ">")
-             .replace(/"/g, "\"")
-             .replace(/'/g, "'");
-     }
+  // Helper to prevent XSS (Corrected implementation)
+  function escapeHtml(unsafe) {
+      if (typeof unsafe !== 'string') return '';
+      return unsafe
+           .replace(/&/g, "&")
+           .replace(/</g, "<")
+           .replace(/>/g, ">")
+           .replace(/"/g, "\"")
+           .replace(/'/g, "'");
+   }
 
+
+  // Function to create a single deck card DOM element
   function createDeckCardElement(deck) {
     const deckCard = document.createElement("div");
     deckCard.className = "deck-card fade-in-up";
-    deckCard.dataset.deckId = deck.id;
+    deckCard.dataset.deckId = deck.id; // Store deck ID on the card element
 
+    // Mastered percentage is a placeholder from backend GET /api/decks for now (set to 0)
     const masteredPercentage = deck.mastered_percentage !== undefined ? deck.mastered_percentage.toFixed(0) : 0;
-    const cardCount = deck.card_count || 0;
+    // ** This uses the card_count value received directly from the backend API **
+    const cardCount = deck.card_count || 0; 
     const tagsHtml = deck.tags ? deck.tags.split(',').map(tag => `<span class="tag-item">${escapeHtml(tag.trim())}</span>`).join(' ') : 'No tags';
 
     deckCard.innerHTML = `
@@ -51,32 +57,29 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
 
+     // Attach event listener to the Study Now button
      const studyButton = deckCard.querySelector(".study-now-btn");
      if(studyButton) {
          studyButton.addEventListener('click', (e) => {
-             e.stopPropagation();
+             e.stopPropagation(); // Prevent click from bubbling up
              location.href = `/study?deck_id=${e.currentTarget.dataset.deckId}`;
          });
      }
 
+    // Attach event listener to the Options (ellipsis) button
     const optionsButton = deckCard.querySelector(".deck-options-btn");
     if (optionsButton) {
       optionsButton.addEventListener("click", (e) => {
         e.stopPropagation(); // Prevent click from bubbling up to document
         
-        // If this menu is already open, close it
-        if (activeMenuButton === optionsButton) {
-            closeActiveMenu();
-        } else {
-            // Close any other open menu
-            closeActiveMenu();
-            // Show the menu for this button
-            showDeckMenu(optionsButton, deck);
-        }
+        // Close any other open menu
+        closeActiveMenu();
+        // Show the menu for this button
+        showDeckMenu(optionsButton, deck); // Pass the button and deck data
       });
     }
 
-    // Add hover effect
+    // Add hover effect (already exists, keep it)
     deckCard.addEventListener("mouseenter", function () {
       this.style.transform = "translateY(-5px)";
       this.style.boxShadow = "0 10px 20px rgba(0, 0, 0, 0.15)";
@@ -87,7 +90,6 @@ document.addEventListener("DOMContentLoaded", () => {
       this.style.boxShadow = "";
     });
 
-
     return deckCard;
   }
 
@@ -95,18 +97,19 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Menu Handling Functions ---
     function createDeckMenuElement(deck) {
         const menu = document.createElement('ul');
-        menu.className = 'deck-context-menu'; // Uses the styles defined in HTML/CSS
+        menu.className = 'deck-context-menu'; // Uses the styles defined in dashboard.html/css
         menu.innerHTML = `
             <li><button data-action="study"><i class="fas fa-book-open"></i> Study Deck</button></li>
             <li><button data-action="edit"><i class="fas fa-pencil-alt"></i> Edit Deck</button></li>
             <li><button data-action="delete" class="delete-option"><i class="fas fa-trash"></i> Delete Deck</button></li>
         `;
 
+        // Add event listeners to menu buttons
         menu.querySelectorAll('button').forEach(button => {
             button.addEventListener('click', (e) => {
                 e.stopPropagation(); // Prevent menu click from closing menu immediately
                 const action = e.currentTarget.dataset.action;
-                handleMenuAction(action, deck);
+                handleMenuAction(action, deck); // Pass action and deck data
                 closeActiveMenu(); // Close menu after action is handled
             });
         });
@@ -116,10 +119,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function showDeckMenu(triggerButton, deck) {
         const menu = createDeckMenuElement(deck);
-        // Append the menu *to the button*
+        // Append the menu *to the button* so it's positioned relative to it
         triggerButton.appendChild(menu);
 
-        // Add a class to the button to signal that the menu is open (for CSS)
+        // Add a class to the button to signal that the menu is open (for CSS transitions)
         triggerButton.classList.add('menu-open');
 
         activeMenuButton = triggerButton; // Set the button as the active menu trigger
@@ -130,23 +133,23 @@ document.addEventListener("DOMContentLoaded", () => {
             // Find the menu element inside the active button
             const menu = activeMenuButton.querySelector('.deck-context-menu');
             if (menu) {
-                 // Add a class for fade-out animation if desired, then remove
-                 // menu.classList.add('fade-out-menu'); // Need CSS for this
-                 // menu.addEventListener('animationend', () => menu.remove(), { once: true });
-
-                 menu.remove(); // Remove the menu element directly
+                 menu.remove(); // Remove the menu element
             }
             activeMenuButton.classList.remove('menu-open'); // Remove the class
             activeMenuButton = null; // Reset the active menu button
         }
     }
 
-    // Close menu when clicking anywhere on the page EXCEPT the active menu button itself
+    // Close menu when clicking anywhere on the page EXCEPT the active menu button or inside the menu
     document.addEventListener('click', (e) => {
         // Check if a menu is open AND the click target is NOT the active menu button
-        // OR is NOT inside the currently open menu (which is inside the button)
-        if (activeMenuButton && !activeMenuButton.contains(e.target)) {
-             closeActiveMenu();
+        // AND is NOT inside the menu element itself
+        if (activeMenuButton) {
+            const menuElement = activeMenuButton.querySelector('.deck-context-menu');
+            if (menuElement && !activeMenuButton.contains(e.target) && !menuElement.contains(e.target)) {
+                 closeActiveMenu();
+            }
+            // Edge case: if click is on the active menu button itself, the optionsButton listener handles it
         }
     });
 
@@ -162,7 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 break;
             case 'delete':
                 if (confirm(`Are you sure you want to delete the deck "${deck.name}"? This action cannot be undone.`)) {
-                    deleteDeck(deck.id, deck.name);
+                    deleteDeck(deck.id, deck.name); // Call the delete API function
                 }
                 break;
             default:
@@ -173,9 +176,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Delete Deck API Call ---
     async function deleteDeck(deckId, deckName) {
         try {
+            // Find the deck card element to potentially remove it later
             const deckCardElement = document.querySelector(`.deck-card[data-deck-id="${deckId}"]`);
-             // Optional: Add loading indicator to the card being deleted
-            if(deckCardElement) deckCardElement.style.opacity = 0.5; // Simple visual indicator
+             // Optional: Add loading indicator or visual cue
+            if(deckCardElement) deckCardElement.style.opacity = 0.5;
 
 
             const response = await fetch(`/api/decks/${deckId}`, {
@@ -187,79 +191,85 @@ document.addEventListener("DOMContentLoaded", () => {
             if (response.ok && result.success) {
                 alert(`Deck "${deckName}" deleted successfully.`);
                 if (deckCardElement) {
-                    deckCardElement.classList.add('fade-out'); // Assumes you have a fade-out CSS class
+                    // Use the fade-out CSS class if defined
+                    deckCardElement.classList.add('fade-out');
                     deckCardElement.addEventListener('animationend', () => {
                         deckCardElement.remove();
                          loadDashboardStats(); // Refresh stats after removing card
-                    }, { once: true }); // Ensure listener runs only once
+                    }, { once: true });
                 } else {
-                     loadDecks(); // Fallback: reload all decks if the specific element wasn't found/removed
+                     // Fallback: If we can't find the element to animate, just reload decks
+                     loadDecks();
                 }
 
             } else {
                 console.error("Error deleting deck:", result);
                 alert(`Error deleting deck "${deckName}": ${result.errors?.general || result.message || 'Unknown error'}`);
-                 // Remove loading indicator if deletion failed
-                 if(deckCardElement) deckCardElement.style.opacity = 1;
+                 if(deckCardElement) deckCardElement.style.opacity = 1; // Remove cue
             }
         } catch (error) {
             console.error("Failed to delete deck:", error);
             alert(`An unexpected error occurred while deleting deck "${deckName}".`);
-             if(deckCardElement) deckCardElement.style.opacity = 1;
+             if(deckCardElement) deckCardElement.style.opacity = 1; // Remove cue
         }
     }
 
-     // Helper to update dashboard stats display after a deck is deleted
-     // This is simplified; loadDashboardStats() is called after successful deletion now.
-     // function updateDashboardStatsDisplay() { ... }
+    // --- Fetch Decks ---
+    async function loadDecks() {
+        // Optional: Show a loading indicator for the decks grid
+        decksGrid.innerHTML = "<p>Loading decks...</p>";
 
-
-  // --- Fetch Decks ---
-  async function loadDecks() {
-    try {
-      const response = await fetch("/api/decks");
-      if (!response.ok) {
-        if (response.status === 401) {
-            window.location.href = '/auth?tab=login&next=' + encodeURIComponent(window.location.pathname);
-            return;
-        }
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const result = await response.json();
-
-      if (result.success && result.decks) {
-        decksGrid.innerHTML = "";
-        if (result.decks.length === 0) {
-          decksGrid.innerHTML = "<p>No decks found. Create your first deck!</p>";
-           if (statsTotalDecksElement) statsTotalDecksElement.textContent = 0;
-        } else {
-          result.decks.forEach((deck, index) => {
-            const deckCardElement = createDeckCardElement(deck);
-            deckCardElement.style.animationDelay = `${index * 0.1}s`;
-            decksGrid.appendChild(deckCardElement);
-          });
-            if (statsTotalDecksElement) {
-                statsTotalDecksElement.textContent = result.decks.length;
+        try {
+          const response = await fetch("/api/decks");
+          if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = '/auth?tab=login&next=' + encodeURIComponent(window.location.pathname);
+                return;
             }
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const result = await response.json();
+
+          if (result.success && result.decks) {
+            decksGrid.innerHTML = ""; // Clear loading/previous content
+            if (result.decks.length === 0) {
+              decksGrid.innerHTML = "<p>No decks found. Create your first deck!</p>";
+               // Update total decks stat if no decks found
+               if (statsTotalDecksElement) statsTotalDecksElement.textContent = 0;
+            } else {
+              result.decks.forEach((deck, index) => {
+                const deckCardElement = createDeckCardElement(deck); // Calls createDeckCardElement
+                deckCardElement.style.animationDelay = `${index * 0.1}s`; // Apply animation delay
+                decksGrid.appendChild(deckCardElement);
+              });
+                // Update total decks stat based on fetched decks count
+                if (statsTotalDecksElement) {
+                    statsTotalDecksElement.textContent = result.decks.length;
+                }
+            }
+          } else {
+            decksGrid.innerHTML = `<p>Error loading decks: ${result.errors?.general || 'Unknown error'}</p>`;
+          }
+        } catch (error) {
+          console.error("Failed to load decks:", error);
+          decksGrid.innerHTML = "<p>Could not load decks. Please try again later.</p>";
         }
-      } else {
-        decksGrid.innerHTML = `<p>Error loading decks: ${result.errors?.general || 'Unknown error'}</p>`;
       }
-    } catch (error) {
-      console.error("Failed to load decks:", error);
-      decksGrid.innerHTML = "<p>Could not load decks. Please try again later.</p>";
-    }
-  }
+
 
   // --- Fetch Dashboard Stats ---
   async function loadDashboardStats() {
       try {
+          // Optional: Show loading indicators in stats cards
+          if(statsTotalDecksElement) statsTotalDecksElement.textContent = '...';
           if(statsCardsMasteredElement) statsCardsMasteredElement.textContent = '...';
           if(statsStudyTimeElement) statsStudyTimeElement.textContent = '...';
+
 
           const response = await fetch("/api/stats/dashboard");
           if (!response.ok) {
               console.error("Failed to fetch dashboard stats", response.status);
+              if(statsTotalDecksElement) statsTotalDecksElement.textContent = 'N/A';
               if(statsCardsMasteredElement) statsCardsMasteredElement.textContent = 'N/A';
               if(statsStudyTimeElement) statsStudyTimeElement.textContent = 'N/A';
                return;
@@ -268,32 +278,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
           if (result.success && result.stats) {
               const stats = result.stats;
+              // Update stats elements using data from the API
+              // Total Decks stat is handled by loadDecks based on fetched count, but updating here is also okay
+               if(statsTotalDecksElement) statsTotalDecksElement.textContent = stats.total_decks !== undefined ? stats.total_decks : 'N/A';
               if(statsCardsMasteredElement) statsCardsMasteredElement.textContent = stats.cards_mastered !== undefined ? stats.cards_mastered : 'N/A';
               if(statsStudyTimeElement) statsStudyTimeElement.textContent = stats.total_study_time_formatted || 'N/A';
           } else {
                console.error("API returned error for dashboard stats:", result);
-              if(statsCardsMasteredElement) statsCardsMasteredElement.textContent = 'Error';
-              if(statsStudyTimeElement) statsStudyTimeElement.textContent = 'Error';
+               if(statsTotalDecksElement) statsTotalDecksElement.textContent = 'Error';
+               if(statsCardsMasteredElement) statsCardsMasteredElement.textContent = 'Error';
+               if(statsStudyTimeElement) statsStudyTimeElement.textContent = 'Error';
           }
 
       } catch (error) {
           console.error("Error during loadDashboardStats:", error);
+           if(statsTotalDecksElement) statsTotalDecksElement.textContent = 'Error';
            if(statsCardsMasteredElement) statsCardsMasteredElement.textContent = 'Error';
            if(statsStudyTimeElement) statsStudyTimeElement.textContent = 'Error';
       }
   }
 
-  // --- Initial Load ---
-  loadDecks();
-  loadDashboardStats();
 
-  // Animation for stat cards on dashboard (kept existing)
-  const statCards = document.querySelectorAll(".stats-grid .stat-card");
-  statCards.forEach((card, index) => {
-      card.style.animationDelay = `${index * 0.1}s`;
-       card.addEventListener("mouseenter", function () { this.style.transform = "translateY(-5px)"; this.style.boxShadow = "0 10px 20px rgba(0, 0, 0, 0.15)"; });
-       card.addEventListener("mouseleave", function () { this.style.transform = ""; this.style.boxShadow = ""; });
-  });
+  // --- Initial Load ---
+  loadDecks(); // This will call createDeckCardElement
+  loadDashboardStats(); // This updates the stats numbers
+
 
     // Ensure any existing menus are closed on page load (safety)
      closeActiveMenu();

@@ -1042,48 +1042,59 @@ def parse_field_values(field_values_json):
 def api_get_study_cards(deck_id):
     user_id = session['user_id']
     cur = mysql.connection.cursor()
+    print(f"\n--- api_get_study_cards (Deck ID: {deck_id}, User ID: {user_id}) ---")
+
     try:
-        # Verify user owns the deck
         cur.execute("SELECT id FROM decks WHERE id = %s AND user_id = %s", (deck_id, user_id))
         deck = cur.fetchone()
         if not deck:
+            print(f"Deck {deck_id} not found or access denied for user {user_id}")
             return jsonify(success=False, errors={'deck': 'Deck not found or access denied'}), 404
 
-        # --- Fetch Cards for Study ---
-        # Fetch 'new' cards first, up to a limit (e.g., 20)
-        # Then fetch 'learning' and 'review' cards that are due today or earlier, up to a limit (e.g., 100)
-        
-        today = date.today()
-        new_cards_limit = 20 # Example limit, could be from user settings
-        review_cards_limit = 100 # Example limit, could be from user settings
-
-        # Fetch new cards
         cur.execute("""
-            SELECT 
-                f.id as flashcard_id, 
-                n.id as note_id, 
+            SELECT new_cards_per_day, max_reviews_per_day
+            FROM settings
+            WHERE user_id = %s
+        """, (user_id,))
+        user_settings = cur.fetchone()
+
+        new_cards_limit = user_settings['new_cards_per_day'] if user_settings and user_settings['new_cards_per_day'] is not None else 20
+        review_cards_limit = user_settings['max_reviews_per_day'] if user_settings and user_settings['max_reviews_per_day'] is not None else 100
+        print(f"User {user_id} study limits: New={new_cards_limit}, Review={review_cards_limit}")
+
+        today = date.today()
+
+        # --- Fetch new cards ---
+        new_cards_query = """
+            SELECT
+                f.id as flashcard_id,
+                n.id as note_id,
                 n.field_values,
-                f.card_type, 
+                f.card_type,
                 f.due_date,
                 f.ease_factor,
                 f.intervals,
                 f.reps,
-                f.lapses
+                f.lapses,
+                f.created_at
             FROM flashcards f
             JOIN notes n ON f.note_id = n.id
             WHERE f.deck_id = %s AND n.user_id = %s AND f.card_type = 'new'
-            ORDER BY f.created_at ASC
+            ORDER BY f.created_at DESC
             LIMIT %s
-        """, (deck_id, user_id, new_cards_limit))
+        """
+        cur.execute(new_cards_query, (deck_id, user_id, new_cards_limit))
         new_cards = cur.fetchall()
+        print(f"Query for NEW cards executed. Fetched {len(new_cards)} cards.")
+        # print(f"Fetched NEW cards data: {new_cards}") # Optional: log card data
 
-        # Fetch learning and review cards that are due
-        cur.execute("""
-            SELECT 
-                f.id as flashcard_id, 
-                n.id as note_id, 
+        # --- Fetch learning and review cards that are due ---
+        review_cards_query = """
+            SELECT
+                f.id as flashcard_id,
+                n.id as note_id,
                 n.field_values,
-                f.card_type, 
+                f.card_type,
                 f.due_date,
                 f.ease_factor,
                 f.intervals,
@@ -1092,14 +1103,18 @@ def api_get_study_cards(deck_id):
             FROM flashcards f
             JOIN notes n ON f.note_id = n.id
             WHERE f.deck_id = %s AND n.user_id = %s AND f.card_type != 'new' AND f.due_date <= %s
-            ORDER BY f.due_date ASC, f.ease_factor ASC -- Earlier due, harder cards first
+            ORDER BY f.due_date ASC, f.ease_factor ASC
             LIMIT %s
-        """, (deck_id, user_id, today, review_cards_limit))
+        """
+        cur.execute(review_cards_query, (deck_id, user_id, today, review_cards_limit))
         review_cards = cur.fetchall()
+        print(f"Query for DUE review/learning cards executed. Fetched {len(review_cards)} cards.")
+        # print(f"Fetched DUE cards data: {review_cards}") # Optional: log card data
 
-        # Combine and process cards
-        all_cards_raw = list(new_cards) + list(review_cards) # Combine the two lists
-        
+        # --- Combine and process cards ---
+        all_cards_raw = list(new_cards) + list(review_cards)
+        print(f"Combined {len(all_cards_raw)} total cards before processing.")
+
         cards_for_study = []
         for card_raw in all_cards_raw:
             card_data = dict(card_raw)
@@ -1116,18 +1131,24 @@ def api_get_study_cards(deck_id):
                 'reps': card_data.get('reps'),
                 'lapses': card_data.get('lapses'),
             })
-        
-        # Shuffle the combined list (optional, but good for mixing new and review)
+
+        print(f"Prepared {len(cards_for_study)} cards for study session after processing.")
+
         import random
         random.shuffle(cards_for_study)
+        print(f"Cards for study session after shuffle (first 5): {cards_for_study[:5]}")
 
         return jsonify(success=True, deck_id=deck_id, cards=cards_for_study)
 
     except Exception as e:
         print(f"Error fetching study cards: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
     finally:
         cur.close()
+
+
 
 
 @app.route('/api/study/review/<int:flashcard_id>', methods=['POST'])
@@ -1135,21 +1156,13 @@ def api_get_study_cards(deck_id):
 def api_submit_review(flashcard_id):
     user_id = session['user_id']
     data = request.get_json()
-    print(f"--- Received review for flashcard {flashcard_id} ---") # Log start
+
     if not data:
         return jsonify(success=False, errors={'general': 'Invalid request format, JSON expected'}), 400
 
-    rating_text = data.get('rating') 
-    print(f"Rating text received: {rating_text}") # **** Log the rating text ****
-
-    rating_map = {'hard': 1, 'good': 2, 'easy': 3} # Ensure this matches frontend
+    rating_text = data.get('rating')
+    rating_map = {'hard': 1, 'good': 2, 'easy': 3}
     rating = rating_map.get(rating_text)
-    print(f"Mapped rating value: {rating}") # **** Log the mapped rating ****
-    # Map rating text to a numerical value for SRA
-    # Assuming a 1-5 scale where 1=Hard, 3=Good, 5=Easy for SRA logic
-    # This mapping is a simplification. Anki uses 1=Again, 2=Hard, 3=Good, 4=Easy.
-    # Let's use a simpler 1-3 mapping for our 'hard', 'good', 'easy' buttons
-    # 1: Hard, 2: Good, 3: Easy
 
     if rating is None:
         return jsonify(success=False, errors={'rating': 'Invalid rating provided'}), 400
@@ -1157,9 +1170,10 @@ def api_submit_review(flashcard_id):
     cur = mysql.connection.cursor()
     try:
         today = date.today()
-        # Fetch flashcard and associated note to verify ownership
+
+        # Fetch flashcard and associated note
         cur.execute("""
-            SELECT f.*, n.user_id 
+            SELECT f.*, n.user_id
             FROM flashcards f
             JOIN notes n ON f.note_id = n.id
             WHERE f.id = %s
@@ -1169,89 +1183,97 @@ def api_submit_review(flashcard_id):
         if not flashcard or flashcard['user_id'] != user_id:
             return jsonify(success=False, errors={'flashcard': 'Flashcard not found or access denied'}), 404
 
-        # --- Spaced Repetition Algorithm (Simplified SM-2-like) ---
+        # --- Fetch User's SRA Settings ---
+        cur.execute("""
+            SELECT learning_steps, ease_bonus
+            FROM settings
+            WHERE user_id = %s
+        """, (user_id,))
+        user_settings = cur.fetchone()
+
+        # Use user's settings or default values
+        # Learning steps is a string like "1 10 1440". Need to parse it.
+        # For this simple SRA, we primarily use ease_bonus.
+        # A full SRA implementation would use learning_steps more extensively.
+        # Let's just use ease_bonus for now, as per your simple SRA logic.
+        ease_bonus = user_settings['ease_bonus'] if user_settings and user_settings['ease_bonus'] is not None else 1.3
+
+        # --- Spaced Repetition Algorithm (Using User Settings) ---
         current_interval = flashcard['intervals']
         current_ease_factor = flashcard['ease_factor']
         current_reps = flashcard['reps']
         current_lapses = flashcard['lapses']
         current_card_type = flashcard['card_type']
-        last_reviewed = datetime.now() # Use current time for last_reviewed
+        last_reviewed = datetime.now()
 
         new_interval = current_interval
-        new_ease_factor = current_ease_factor
+        new_ease_factor = current_ease_factor * ease_bonus # Apply user's initial ease bonus if needed (or just during first review?)
+                                                          # Standard SM-2 applies EF * current_interval
+                                                          # Let's stick to the previous simplified logic but use the fetched EF
+
         new_reps = current_reps + 1
         new_lapses = current_lapses
-        new_card_type = 'review' # Assume it goes to review unless failed
+        new_card_type = 'review'
 
-        # Adjust ease factor based on rating
+        # Standard SM-2 style interval and EF adjustment (adjusting previous logic to be closer to standard and use EF)
         if rating == 3: # Easy
-            new_ease_factor += 0.15 # Increase ease more for easy
+            new_ease_factor = current_ease_factor + 0.15 # Increase EF
+            if current_card_type == 'new':
+                 new_interval = 6 # Example: Graduate New -> Review with 6 day interval
+            elif current_card_type == 'learning':
+                 new_interval = 1 # Example: Graduate Learning -> Review with 1 day interval
+            else: # Review
+                 new_interval = current_interval * new_ease_factor # Multiply current interval by new EF
+
+            new_card_type = 'review'
+
         elif rating == 2: # Good
-             pass # No change for Good in this simplified version
+            # Ease factor doesn't change in standard SM-2 for Good
+            if current_card_type == 'new':
+                 new_interval = 1 # Example: Graduate New -> Review with 1 day interval
+                 new_card_type = 'learning' # Often stays in learning briefly
+                 # Let's keep it simple: New -> Good -> 1 day interval, card_type 'learning'
+                 new_card_type = 'learning' # Stay in learning
+            elif current_card_type == 'learning':
+                 new_interval = max(current_interval + 1, 1) # Progress in learning, min 1 day
+                 new_card_type = 'learning' # Stay in learning stage until 'Easy'
+                 # Alternative (Simpler): Good graduates to review after first step
+                 # new_interval = 1 # Graduate to review with 1 day interval
+                 # new_card_type = 'review'
+                 # Let's stick to Good keeps it in learning for now, until Easy press.
+            else: # Review
+                 new_interval = current_interval * new_ease_factor # Multiply current interval by new EF
+                 new_card_type = 'review'
+
+
         elif rating == 1: # Hard
-            new_ease_factor -= 0.20 # Decrease ease more for hard
+            new_ease_factor = current_ease_factor - 0.20 # Decrease EF
             new_lapses += 1
+            new_interval = 1 # Reset interval to 1 day
             new_card_type = 'learning' # Move back to learning stage
 
 
         # Ensure ease factor stays within a reasonable range
-        new_ease_factor = max(1.3, new_ease_factor) # Minimum ease factor
-        new_ease_factor = min(5.0, new_ease_factor) # Maximum ease factor (example)
-
-
-        # Calculate next interval based on rating and ease factor
-        if current_card_type == 'new':
-            # Initial intervals for new cards
-            if rating == 3: # Easy (New)
-                new_interval = 4 # Days (Example: 1 day, then 4 days) - Could use learning steps
-            elif rating == 2: # Good (New)
-                 new_interval = 1 # Day (Example: 1 day) - Could use learning steps
-            elif rating == 1: # Hard (New)
-                 new_interval = 0 # Or stay in learning with very short steps - For simplicity, repeat soon
-                 new_card_type = 'new' # Stays new or goes to learning
-                 # Alternative: Use learning steps e.g., [1, 10] minutes/days
-                 # For simple days-based intervals, rating 1 means repeat soon, maybe 1 day
-                 new_interval = 1 # Repeat tomorrow if failed new card
-                 new_card_type = 'learning'
-
-        elif current_card_type == 'learning':
-             # Simple transition out of learning
-             if rating >= 2: # Good or Easy in learning
-                 # Graduate from learning
-                 if current_interval < 1: # If still on steps less than a day
-                     new_interval = 1 # First interval after graduating
-                 else:
-                     new_interval = current_interval * new_ease_factor # Use ease factor for next interval
-                 new_card_type = 'review'
-             elif rating == 1: # Hard in learning
-                 # Stay in learning or reset step
-                 new_interval = 0 # Repeat very soon (within same session? Or next day?)
-                 # For simplicity with day-based intervals, just reset to 1 day and stay learning
-                 new_interval = 1
-                 new_card_type = 'learning' # Stays learning
-
-        elif current_card_type == 'review':
-            if rating == 3: # Easy (Review)
-                new_interval = current_interval * new_ease_factor * 1.3 # Longer interval for easy
-            elif rating == 2: # Good (Review)
-                new_interval = current_interval * new_ease_factor
-            elif rating == 1: # Hard (Review)
-                new_interval = max(1, current_interval * 0.5) # Significantly shorter, but at least 1 day
-                new_card_type = 'learning' # Go back to learning stage
+        new_ease_factor = max(1.3, new_ease_factor)
+        new_ease_factor = min(5.0, new_ease_factor)
 
         # Ensure minimum interval is 1 day for review/learning graduating
-        if new_card_type == 'review' and new_interval < 1:
-             new_interval = 1
+        # If rating is Hard (1), interval is 1. If rating is Good/Easy and card type is review, use calculated interval.
+        # If rating is Good/Easy and card type is learning, use calculated learning interval.
+        final_interval_days = new_interval
+        if final_interval_days < 1:
+            final_interval_days = 1 # Minimum interval is 1 day
 
-        # For simplicity, all intervals are in days
-        next_due_date = today + timedelta(days=max(1, int(round(new_interval)))) # Next due date must be at least tomorrow if interval > 0
+
+        # Calculate next due date
+        next_due_date = today + timedelta(days=int(round(final_interval_days)))
 
 
         # Update flashcard in DB
         cur.execute(
             """
-            UPDATE flashcards 
-            SET 
+            UPDATE flashcards
+            SET
                 card_type = %s,
                 due_date = %s,
                 intervals = %s,
@@ -1261,7 +1283,7 @@ def api_submit_review(flashcard_id):
                 last_reviewed = %s
             WHERE id = %s
             """,
-            (new_card_type, next_due_date, int(round(new_interval)), new_ease_factor, new_reps, new_lapses, last_reviewed, flashcard_id)
+            (new_card_type, next_due_date, int(round(final_interval_days)), new_ease_factor, new_reps, new_lapses, last_reviewed, flashcard_id)
         )
 
         # Insert into review_logs
@@ -1270,11 +1292,10 @@ def api_submit_review(flashcard_id):
             INSERT INTO review_logs (flashcard_id, user_id, rating, intervals_before, intervals_after, ease_factor_before, ease_factor_after)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             """,
-            (flashcard_id, user_id, rating, current_interval, int(round(new_interval)), current_ease_factor, new_ease_factor)
+            (flashcard_id, user_id, rating, current_interval, int(round(final_interval_days)), current_ease_factor, new_ease_factor)
         )
 
-        # Update user_stats (Basic: increment total reviews)
-        # Streak logic is more complex and might need a separate process or check
+        # Update user_stats (increment total reviews and manage streak - streak requires more complex logic)
         cur.execute(
             """
             INSERT INTO user_stats (user_id, total_reviews)
@@ -1287,16 +1308,15 @@ def api_submit_review(flashcard_id):
 
         mysql.connection.commit()
 
-        # Return success and maybe some next card info or stats
         return jsonify(
-            success=True, 
+            success=True,
             message='Review recorded',
             flashcard_id=flashcard_id,
             new_state={
                 'card_type': new_card_type,
                 'due_date': next_due_date.strftime('%Y-%m-%d'),
-                'intervals': int(round(new_interval)),
-                'ease_factor': round(new_ease_factor, 2), # Round for display
+                'intervals': int(round(final_interval_days)),
+                'ease_factor': round(new_ease_factor, 2),
                 'reps': new_reps,
                 'lapses': new_lapses
             }
@@ -1305,6 +1325,8 @@ def api_submit_review(flashcard_id):
     except Exception as e:
         mysql.connection.rollback()
         print(f"Error submitting review for flashcard {flashcard_id}: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
     finally:
         cur.close()
