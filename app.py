@@ -6,6 +6,7 @@ import os
 import config
 from functools import wraps
 import json
+from datetime import datetime, timedelta, date
 
 app = Flask(__name__)
 
@@ -583,6 +584,328 @@ def api_get_decks():
 
     except Exception as e:
         print(f"Error fetching decks: {e}")
+        return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
+    finally:
+        cur.close()
+
+def parse_field_values(field_values_json):
+    try:
+        # Assumes field_values_json is a JSON string like '{"Front": "...", "Back": "..."}'
+        # Or handles if it's directly a dict (though DB stores as string)
+        if isinstance(field_values_json, str):
+             # Handle potential escaping if needed, though json.loads is usually robust
+             return json.loads(field_values_json)
+        elif isinstance(field_values_json, dict):
+            return field_values_json # Already a dict, though unexpected from DB fetch
+        return {'Front': 'Error: Invalid data', 'Back': ''} # Default for unexpected types
+    except (json.JSONDecodeError, TypeError):
+        return {'Front': 'Error loading content', 'Back': ''} # Handle parsing errors
+
+@app.route('/api/study/session/<int:deck_id>', methods=['GET'])
+@login_required
+def api_get_study_cards(deck_id):
+    user_id = session['user_id']
+    cur = mysql.connection.cursor()
+    try:
+        # Verify user owns the deck
+        cur.execute("SELECT id FROM decks WHERE id = %s AND user_id = %s", (deck_id, user_id))
+        deck = cur.fetchone()
+        if not deck:
+            return jsonify(success=False, errors={'deck': 'Deck not found or access denied'}), 404
+
+        # --- Fetch Cards for Study ---
+        # Fetch 'new' cards first, up to a limit (e.g., 20)
+        # Then fetch 'learning' and 'review' cards that are due today or earlier, up to a limit (e.g., 100)
+        
+        today = date.today()
+        new_cards_limit = 20 # Example limit, could be from user settings
+        review_cards_limit = 100 # Example limit, could be from user settings
+
+        # Fetch new cards
+        cur.execute("""
+            SELECT 
+                f.id as flashcard_id, 
+                n.id as note_id, 
+                n.field_values,
+                f.card_type, 
+                f.due_date,
+                f.ease_factor,
+                f.intervals,
+                f.reps,
+                f.lapses
+            FROM flashcards f
+            JOIN notes n ON f.note_id = n.id
+            WHERE f.deck_id = %s AND n.user_id = %s AND f.card_type = 'new'
+            ORDER BY f.created_at ASC
+            LIMIT %s
+        """, (deck_id, user_id, new_cards_limit))
+        new_cards = cur.fetchall()
+
+        # Fetch learning and review cards that are due
+        cur.execute("""
+            SELECT 
+                f.id as flashcard_id, 
+                n.id as note_id, 
+                n.field_values,
+                f.card_type, 
+                f.due_date,
+                f.ease_factor,
+                f.intervals,
+                f.reps,
+                f.lapses
+            FROM flashcards f
+            JOIN notes n ON f.note_id = n.id
+            WHERE f.deck_id = %s AND n.user_id = %s AND f.card_type != 'new' AND f.due_date <= %s
+            ORDER BY f.due_date ASC, f.ease_factor ASC -- Earlier due, harder cards first
+            LIMIT %s
+        """, (deck_id, user_id, today, review_cards_limit))
+        review_cards = cur.fetchall()
+
+        # Combine and process cards
+        all_cards_raw = list(new_cards) + list(review_cards) # Combine the two lists
+        
+        cards_for_study = []
+        for card_raw in all_cards_raw:
+            card_data = dict(card_raw)
+            field_values = parse_field_values(card_data.get('field_values'))
+            cards_for_study.append({
+                'flashcard_id': card_data['flashcard_id'],
+                'note_id': card_data['note_id'],
+                'front': field_values.get('Front', ''),
+                'back': field_values.get('Back', ''),
+                'card_type': card_data.get('card_type'),
+                'due_date': card_data.get('due_date').strftime('%Y-%m-%d') if card_data.get('due_date') else None,
+                'ease_factor': card_data.get('ease_factor'),
+                'intervals': card_data.get('intervals'),
+                'reps': card_data.get('reps'),
+                'lapses': card_data.get('lapses'),
+            })
+        
+        # Shuffle the combined list (optional, but good for mixing new and review)
+        import random
+        random.shuffle(cards_for_study)
+
+        return jsonify(success=True, deck_id=deck_id, cards=cards_for_study)
+
+    except Exception as e:
+        print(f"Error fetching study cards: {e}")
+        return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
+    finally:
+        cur.close()
+
+
+@app.route('/api/study/review/<int:flashcard_id>', methods=['POST'])
+@login_required
+def api_submit_review(flashcard_id):
+    user_id = session['user_id']
+    data = request.get_json()
+    print(f"--- Received review for flashcard {flashcard_id} ---") # Log start
+    if not data:
+        return jsonify(success=False, errors={'general': 'Invalid request format, JSON expected'}), 400
+
+    rating_text = data.get('rating') 
+    print(f"Rating text received: {rating_text}") # **** Log the rating text ****
+
+    rating_map = {'hard': 1, 'good': 2, 'easy': 3} # Ensure this matches frontend
+    rating = rating_map.get(rating_text)
+    print(f"Mapped rating value: {rating}") # **** Log the mapped rating ****
+    # Map rating text to a numerical value for SRA
+    # Assuming a 1-5 scale where 1=Hard, 3=Good, 5=Easy for SRA logic
+    # This mapping is a simplification. Anki uses 1=Again, 2=Hard, 3=Good, 4=Easy.
+    # Let's use a simpler 1-3 mapping for our 'hard', 'good', 'easy' buttons
+    # 1: Hard, 2: Good, 3: Easy
+
+    if rating is None:
+        return jsonify(success=False, errors={'rating': 'Invalid rating provided'}), 400
+
+    cur = mysql.connection.cursor()
+    try:
+        today = date.today()
+        # Fetch flashcard and associated note to verify ownership
+        cur.execute("""
+            SELECT f.*, n.user_id 
+            FROM flashcards f
+            JOIN notes n ON f.note_id = n.id
+            WHERE f.id = %s
+        """, (flashcard_id,))
+        flashcard = cur.fetchone()
+
+        if not flashcard or flashcard['user_id'] != user_id:
+            return jsonify(success=False, errors={'flashcard': 'Flashcard not found or access denied'}), 404
+
+        # --- Spaced Repetition Algorithm (Simplified SM-2-like) ---
+        current_interval = flashcard['intervals']
+        current_ease_factor = flashcard['ease_factor']
+        current_reps = flashcard['reps']
+        current_lapses = flashcard['lapses']
+        current_card_type = flashcard['card_type']
+        last_reviewed = datetime.now() # Use current time for last_reviewed
+
+        new_interval = current_interval
+        new_ease_factor = current_ease_factor
+        new_reps = current_reps + 1
+        new_lapses = current_lapses
+        new_card_type = 'review' # Assume it goes to review unless failed
+
+        # Adjust ease factor based on rating
+        if rating == 3: # Easy
+            new_ease_factor += 0.15 # Increase ease more for easy
+        elif rating == 2: # Good
+             pass # No change for Good in this simplified version
+        elif rating == 1: # Hard
+            new_ease_factor -= 0.20 # Decrease ease more for hard
+            new_lapses += 1
+            new_card_type = 'learning' # Move back to learning stage
+
+
+        # Ensure ease factor stays within a reasonable range
+        new_ease_factor = max(1.3, new_ease_factor) # Minimum ease factor
+        new_ease_factor = min(5.0, new_ease_factor) # Maximum ease factor (example)
+
+
+        # Calculate next interval based on rating and ease factor
+        if current_card_type == 'new':
+            # Initial intervals for new cards
+            if rating == 3: # Easy (New)
+                new_interval = 4 # Days (Example: 1 day, then 4 days) - Could use learning steps
+            elif rating == 2: # Good (New)
+                 new_interval = 1 # Day (Example: 1 day) - Could use learning steps
+            elif rating == 1: # Hard (New)
+                 new_interval = 0 # Or stay in learning with very short steps - For simplicity, repeat soon
+                 new_card_type = 'new' # Stays new or goes to learning
+                 # Alternative: Use learning steps e.g., [1, 10] minutes/days
+                 # For simple days-based intervals, rating 1 means repeat soon, maybe 1 day
+                 new_interval = 1 # Repeat tomorrow if failed new card
+                 new_card_type = 'learning'
+
+        elif current_card_type == 'learning':
+             # Simple transition out of learning
+             if rating >= 2: # Good or Easy in learning
+                 # Graduate from learning
+                 if current_interval < 1: # If still on steps less than a day
+                     new_interval = 1 # First interval after graduating
+                 else:
+                     new_interval = current_interval * new_ease_factor # Use ease factor for next interval
+                 new_card_type = 'review'
+             elif rating == 1: # Hard in learning
+                 # Stay in learning or reset step
+                 new_interval = 0 # Repeat very soon (within same session? Or next day?)
+                 # For simplicity with day-based intervals, just reset to 1 day and stay learning
+                 new_interval = 1
+                 new_card_type = 'learning' # Stays learning
+
+        elif current_card_type == 'review':
+            if rating == 3: # Easy (Review)
+                new_interval = current_interval * new_ease_factor * 1.3 # Longer interval for easy
+            elif rating == 2: # Good (Review)
+                new_interval = current_interval * new_ease_factor
+            elif rating == 1: # Hard (Review)
+                new_interval = max(1, current_interval * 0.5) # Significantly shorter, but at least 1 day
+                new_card_type = 'learning' # Go back to learning stage
+
+        # Ensure minimum interval is 1 day for review/learning graduating
+        if new_card_type == 'review' and new_interval < 1:
+             new_interval = 1
+
+        # For simplicity, all intervals are in days
+        next_due_date = today + timedelta(days=max(1, int(round(new_interval)))) # Next due date must be at least tomorrow if interval > 0
+
+
+        # Update flashcard in DB
+        cur.execute(
+            """
+            UPDATE flashcards 
+            SET 
+                card_type = %s,
+                due_date = %s,
+                intervals = %s,
+                ease_factor = %s,
+                reps = %s,
+                lapses = %s,
+                last_reviewed = %s
+            WHERE id = %s
+            """,
+            (new_card_type, next_due_date, int(round(new_interval)), new_ease_factor, new_reps, new_lapses, last_reviewed, flashcard_id)
+        )
+
+        # Insert into review_logs
+        cur.execute(
+            """
+            INSERT INTO review_logs (flashcard_id, user_id, rating, intervals_before, intervals_after, ease_factor_before, ease_factor_after)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """,
+            (flashcard_id, user_id, rating, current_interval, int(round(new_interval)), current_ease_factor, new_ease_factor)
+        )
+
+        # Update user_stats (Basic: increment total reviews)
+        # Streak logic is more complex and might need a separate process or check
+        cur.execute(
+            """
+            INSERT INTO user_stats (user_id, total_reviews)
+            VALUES (%s, 1)
+            ON DUPLICATE KEY UPDATE total_reviews = total_reviews + 1
+            """,
+            (user_id,)
+        )
+
+
+        mysql.connection.commit()
+
+        # Return success and maybe some next card info or stats
+        return jsonify(
+            success=True, 
+            message='Review recorded',
+            flashcard_id=flashcard_id,
+            new_state={
+                'card_type': new_card_type,
+                'due_date': next_due_date.strftime('%Y-%m-%d'),
+                'intervals': int(round(new_interval)),
+                'ease_factor': round(new_ease_factor, 2), # Round for display
+                'reps': new_reps,
+                'lapses': new_lapses
+            }
+        )
+
+    except Exception as e:
+        mysql.connection.rollback()
+        print(f"Error submitting review for flashcard {flashcard_id}: {e}")
+        return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
+    finally:
+        cur.close()
+
+# Add this route in app.py
+@app.route('/api/decks/<int:deck_id>', methods=['GET'])
+@login_required
+def api_get_deck_details(deck_id):
+    user_id = session['user_id']
+    cur = mysql.connection.cursor()
+    try:
+        # Query for specific deck details, including tags if needed
+        cur.execute("""
+            SELECT 
+                d.id, 
+                d.name, 
+                d.description, 
+                d.created_at,
+                (SELECT COUNT(*) FROM flashcards f WHERE f.deck_id = d.id) as card_count,
+                GROUP_CONCAT(DISTINCT t.name SEPARATOR ', ') as tags
+            FROM decks d
+            LEFT JOIN deck_tags dt ON d.id = dt.deck_id
+            LEFT JOIN tags t ON dt.tag_id = t.id
+            WHERE d.id = %s AND d.user_id = %s
+            GROUP BY d.id 
+        """, (deck_id, user_id))
+        
+        deck = cur.fetchone()
+        
+        if deck:
+            # Convert Row object to dictionary if necessary, DictCursor handles this
+            return jsonify(success=True, deck=deck)
+        else:
+            return jsonify(success=False, errors={'deck': 'Deck not found or access denied'}), 404
+
+    except Exception as e:
+        print(f"Error fetching deck details for ID {deck_id}: {e}")
         return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
     finally:
         cur.close()
