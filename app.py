@@ -56,6 +56,229 @@ def auth():
 def dashboard():
     return render_template('dashboard.html')
 
+@app.route('/api/stats/dashboard', methods=['GET'])
+@login_required
+def api_get_dashboard_stats():
+    user_id = session['user_id']
+    cur = mysql.connection.cursor()
+    try:
+        # 1. Total Decks
+        cur.execute("SELECT COUNT(*) as total_decks FROM decks WHERE user_id = %s", (user_id,))
+        total_decks_data = cur.fetchone()
+        total_decks = total_decks_data['total_decks'] if total_decks_data else 0
+
+        # 2. Total Cards Learned/Mastered
+        # Definition of "mastered" can vary. Let's use a simple definition:
+        # cards with ease_factor >= 2.5 and reps >= 3 (example criteria)
+        # Or simpler: cards that have been reviewed successfully a few times (e.g., reps > 5)
+        # Let's use a simple count of cards with reps > 0 for now (cards that have been seen at least once)
+        # A better definition would involve a threshold on ease factor or number of reviews after graduating.
+        # Let's use ease_factor >= 3.0 as a potential indicator of 'mastered' for now.
+        cur.execute("""
+            SELECT COUNT(DISTINCT f.id) as cards_mastered -- Count unique flashcards
+            FROM flashcards f
+            JOIN notes n ON f.note_id = n.id
+            WHERE n.user_id = %s AND f.ease_factor >= 3.0 -- Example criteria
+        """, (user_id,))
+        cards_mastered_data = cur.fetchone()
+        cards_mastered = cards_mastered_data['cards_mastered'] if cards_mastered_data else 0
+
+        # 3. Total Study Time
+        # Assuming total_time_spent_seconds is tracked in user_stats or review_sessions
+        # We can aggregate from review_sessions if available, or rely on user_stats
+        cur.execute("""
+            SELECT SUM(time_spent_seconds) as total_time_seconds
+            FROM review_sessions
+            WHERE user_id = %s AND session_end IS NOT NULL
+        """, (user_id,))
+        study_time_data = cur.fetchone()
+        total_time_seconds = study_time_data['total_time_seconds'] if study_time_data and study_time_data['total_time_seconds'] is not None else 0
+
+        # Convert seconds to a human-readable format (e.g., hours, minutes)
+        total_time_hours = round(total_time_seconds / 3600, 1) # Round to 1 decimal place
+
+        # 4. Review Streak (More complex - requires daily review tracking)
+        # The user_stats table has review_streak_days, current_streak_start, last_reviewed_date
+        # This requires logic during review submission (api_submit_review) to update the streak.
+        # For now, fetch the raw streak value from user_stats.
+        cur.execute("SELECT review_streak_days FROM user_stats WHERE user_id = %s", (user_id,))
+        streak_data = cur.fetchone()
+        review_streak_days = streak_data['review_streak_days'] if streak_data and streak_data['review_streak_days'] is not None else 0
+        
+        # If user_stats doesn't exist, review_streak_days will be 0, which is correct.
+
+
+        dashboard_stats = {
+            'total_decks': total_decks,
+            'cards_mastered': cards_mastered,
+            'total_study_time_seconds': total_time_seconds, # Raw value
+            'total_study_time_formatted': f"{total_time_hours}h", # Formatted value for display
+            'review_streak_days': review_streak_days
+        }
+
+        return jsonify(success=True, stats=dashboard_stats)
+
+    except Exception as e:
+        print(f"Error fetching dashboard stats for user {user_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
+    finally:
+        cur.close()
+
+
+@app.route('/api/stats/performance', methods=['GET'])
+@login_required
+def api_get_performance_stats():
+    user_id = session['user_id']
+    cur = mysql.connection.cursor()
+    try:
+        # This API needs to provide data suitable for the performance chart on results.html
+        # The chart canvas id is "performanceChart".
+        # Example data: cards reviewed per day, average rating per day, accuracy over time.
+        # Let's fetch daily review counts and average rating for the last 30 days.
+
+        today = date.today()
+        thirty_days_ago = today - timedelta(days=30)
+
+        # Fetch reviews aggregated by day
+        cur.execute("""
+            SELECT 
+                DATE(review_time) as review_date,
+                COUNT(*) as total_reviews,
+                AVG(rating) as average_rating -- Assuming rating 1-3 or 1-5
+            FROM review_logs
+            WHERE user_id = %s AND review_time >= %s
+            GROUP BY DATE(review_time)
+            ORDER BY review_date ASC
+        """, (user_id, thirty_days_ago))
+
+        daily_stats_raw = cur.fetchall()
+
+        # Prepare data for Chart.js (Labels are dates, datasets are review counts and average ratings)
+        dates = []
+        review_counts = []
+        average_ratings = []
+
+        # Fill in dates with 0s for days with no reviews
+        # Create a dictionary for quick lookup by date string
+        daily_stats_dict = {str(day['review_date']): day for day in daily_stats_raw}
+
+        for i in range(31): # Include today and the 30 previous days
+            day = thirty_days_ago + timedelta(days=i)
+            day_str = day.strftime('%Y-%m-%d')
+            dates.append(day_str) # Date string for label
+
+            stats_for_day = daily_stats_dict.get(day_str)
+            if stats_for_day:
+                review_counts.append(stats_for_day['total_reviews'])
+                average_ratings.append(round(stats_for_day['average_rating'], 2)) # Round rating for display
+            else:
+                # No reviews on this day
+                review_counts.append(0)
+                average_ratings.append(None) # Use null for missing data in chart
+
+
+        performance_data = {
+            'labels': dates,
+            'datasets': [
+                {
+                    'label': 'Cards Reviewed',
+                    'data': review_counts,
+                    'backgroundColor': 'rgba(54, 162, 235, 0.5)', # Example color
+                    'borderColor': 'rgba(54, 162, 235, 1)',
+                    'borderWidth': 1,
+                    'yAxisID': 'y-reviews'
+                },
+                 {
+                    'label': 'Average Rating',
+                    'data': average_ratings,
+                    'backgroundColor': 'rgba(75, 192, 192, 0.5)', # Example color
+                    'borderColor': 'rgba(75, 192, 192, 1)',
+                     'type': 'line', # Overlay as a line
+                    'fill': False,
+                    'yAxisID': 'y-rating',
+                    'tension': 0.1 # Smoother line
+                }
+                # Add more datasets for accuracy etc. later
+            ]
+        }
+
+        return jsonify(success=True, performance_data=performance_data)
+
+    except Exception as e:
+        print(f"Error fetching performance stats for user {user_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
+    finally:
+        cur.close()
+
+
+@app.route('/api/stats/activity', methods=['GET'])
+@login_required
+def api_get_recent_activity():
+    user_id = session['user_id']
+    cur = mysql.connection.cursor()
+    try:
+        # Fetch recent activity from review_logs
+        # Join with flashcards and decks to get relevant names
+        cur.execute("""
+            SELECT 
+                rl.review_time,
+                rl.rating,
+                f.id as flashcard_id,
+                d.name as deck_name,
+                -- To get card content, would need to join notes and parse field_values (optional)
+                -- n.field_values 
+                rl.id as review_id # Unique ID for the log entry
+            FROM review_logs rl
+            JOIN flashcards f ON rl.flashcard_id = f.id
+            JOIN decks d ON f.deck_id = d.id
+            -- JOIN notes n ON f.note_id = n.id -- Uncomment if you need card content
+            WHERE rl.user_id = %s
+            ORDER BY rl.review_time DESC
+            LIMIT 10 -- Fetch the last 10 activities
+        """, (user_id,))
+
+        recent_activity_raw = cur.fetchall()
+
+        activity_list = []
+        rating_descriptions = {1: 'Hard', 2: 'Good', 3: 'Easy'} # Map numerical rating to description
+
+        for activity in recent_activity_raw:
+            # Example formatting
+            activity_type = "Reviewed" # Basic activity type for now
+            description = f"Rated '{rating_descriptions.get(activity['rating'], 'N/A')}' on a card in '{activity['deck_name']}'"
+            
+            # If you needed card content:
+            # field_values = parse_field_values(activity.get('field_values'))
+            # description = f"Reviewed card '{field_values.get('Front', 'N/A')}' in '{activity['deck_name']}'"
+
+
+            activity_list.append({
+                'id': activity['review_id'], # Using review log ID as activity ID
+                'type': activity_type,
+                'description': description,
+                'time': activity['review_time'].isoformat(), # Send ISO format timestamp
+                # Add icon class based on rating/type if needed for frontend
+                'icon': 'fas fa-check' # Generic icon for review, customize based on rating if needed
+            })
+
+        # You might also add other activity types here, like "Created Deck", "Added Cards" etc.
+        # These would need querying other tables (decks, notes) and potentially a UNION or separate fetches.
+
+        return jsonify(success=True, activity=activity_list)
+
+    except Exception as e:
+        print(f"Error fetching recent activity for user {user_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
+    finally:
+        cur.close()
+
+
 @app.route('/create-deck')
 @login_required
 def createDeck():
