@@ -313,6 +313,183 @@ def api_add_card_to_deck(deck_id):
 def profile():
     return render_template('profile.html')
 
+@app.route('/api/profile', methods=['GET'])
+@login_required
+def api_get_profile():
+    user_id = session['user_id']
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute("""
+            SELECT id, username, email, date_of_birth, gender, country, city, created_at
+            FROM users
+            WHERE id = %s
+        """, (user_id,))
+        user_data = cur.fetchone()
+
+        if not user_data:
+             return jsonify(success=False, errors={'general': 'User not found'}), 404
+
+        # Fetch user settings (SRA related)
+        cur.execute("""
+            SELECT new_cards_per_day, max_reviews_per_day, learning_steps, ease_bonus
+            FROM settings
+            WHERE user_id = %s
+        """, (user_id,))
+        settings_data = cur.fetchone()
+
+        # Provide default settings if none exist
+        if not settings_data:
+             settings_data = {
+                 'new_cards_per_day': 20,
+                 'max_reviews_per_day': 100,
+                 'learning_steps': '1,10',
+                 'ease_bonus': 1.3
+             }
+
+        profile_data = dict(user_data)
+        profile_data['settings'] = settings_data
+
+        if profile_data.get('date_of_birth'):
+            profile_data['date_of_birth'] = profile_data['date_of_birth'].strftime('%Y-%m-%d')
+
+        return jsonify(success=True, profile=profile_data)
+
+    except Exception as e:
+        print(f"Error fetching user profile for user {user_id}: {e}")
+        return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
+    finally:
+        cur.close()
+
+
+@app.route('/api/profile', methods=['PUT'])
+@login_required
+def api_update_profile():
+    user_id = session['user_id']
+    data = request.get_json()
+
+    if not data:
+        return jsonify(success=False, errors={'general': 'Invalid request format, JSON expected'}), 400
+
+    username = data.get('username')
+    email = data.get('email')
+    # date_of_birth, gender, country, city updates omitted for simplicity based on HTML form
+    timezone = data.get('timezone') # Timezone storage needs definition (maybe add to users or settings table?)
+
+    # Assuming SRA settings are potentially updated via this form/API
+    settings_data_payload = data.get('settings', {})
+    new_cards_per_day = settings_data_payload.get('new_cards_per_day')
+    max_reviews_per_day = settings_data_payload.get('max_reviews_per_day')
+    learning_steps = settings_data_payload.get('learning_steps')
+    ease_bonus = settings_data_payload.get('ease_bonus')
+
+
+    cur = mysql.connection.cursor()
+
+    try:
+        update_fields = []
+        update_values = []
+
+        if username is not None:
+             if not username.strip():
+                 return jsonify(success=False, errors={'username': 'Username cannot be empty'}), 400
+             update_fields.append("username = %s")
+             update_values.append(username.strip())
+
+        if email is not None:
+            email = email.strip()
+            if not email:
+                 return jsonify(success=False, errors={'email': 'Email cannot be empty'}), 400
+            cur.execute("SELECT id FROM users WHERE email = %s AND id != %s", (email, user_id))
+            existing_user = cur.fetchone()
+            if existing_user:
+                 return jsonify(success=False, errors={'email': 'Email address is already in use'}), 409
+
+            update_fields.append("email = %s")
+            update_values.append(email)
+            session['email'] = email # Update session
+
+        # Add timezone update if storing it in `users` or `settings`
+        # if timezone is not None:
+        #    update_fields.append("timezone_field = %s") # Assuming a 'timezone_field' column
+        #    update_values.append(timezone)
+
+        if update_fields:
+            update_query = "UPDATE users SET " + ", ".join(update_fields) + " WHERE id = %s"
+            update_values.append(user_id)
+            cur.execute(update_query, tuple(update_values))
+            if 'username = %s' in update_fields:
+                 session['username'] = username.strip()
+
+        # Update settings table (SRA settings)
+        # First, fetch existing settings to merge with payload
+        cur.execute("""
+            SELECT new_cards_per_day, max_reviews_per_day, learning_steps, ease_bonus
+            FROM settings WHERE user_id = %s
+        """, (user_id,))
+        existing_settings = cur.fetchone()
+
+        # Use payload value if provided, otherwise use existing/default
+        settings_to_save = {
+            'new_cards_per_day': new_cards_per_day if new_cards_per_day is not None else (existing_settings['new_cards_per_day'] if existing_settings else 20),
+            'max_reviews_per_day': max_reviews_per_day if max_reviews_per_day is not None else (existing_settings['max_reviews_per_day'] if existing_settings else 100),
+            'learning_steps': learning_steps if learning_steps is not None else (existing_settings['learning_steps'] if existing_settings else '1,10'),
+            'ease_bonus': ease_bonus if ease_bonus is not None else (existing_settings['ease_bonus'] if existing_settings else 1.3)
+        }
+        
+        # Ensure correct types (especially int/float)
+        try:
+            settings_to_save['new_cards_per_day'] = int(settings_to_save['new_cards_per_day'])
+            settings_to_save['max_reviews_per_day'] = int(settings_to_save['max_reviews_per_day'])
+            settings_to_save['ease_bonus'] = float(settings_to_save['ease_bonus'])
+            # learning_steps might need format validation
+        except (ValueError, TypeError):
+             return jsonify(success=False, errors={'settings': 'Invalid format for setting values'}), 400
+
+
+        settings_update_query = """
+            INSERT INTO settings (user_id, new_cards_per_day, max_reviews_per_day, learning_steps, ease_bonus)
+            VALUES (%s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                new_cards_per_day = VALUES(new_cards_per_day),
+                max_reviews_per_day = VALUES(max_reviews_per_day),
+                learning_steps = VALUES(learning_steps),
+                ease_bonus = VALUES(ease_bonus)
+        """
+        cur.execute(
+            settings_update_query,
+            (user_id, settings_to_save['new_cards_per_day'], settings_to_save['max_reviews_per_day'], settings_to_save['learning_steps'], settings_to_save['ease_bonus'])
+        )
+
+        mysql.connection.commit()
+
+        cur.execute("""
+            SELECT id, username, email, date_of_birth, gender, country, city, created_at
+            FROM users
+            WHERE id = %s
+        """, (user_id,))
+        updated_user_data = cur.fetchone()
+
+        cur.execute("""
+            SELECT new_cards_per_day, max_reviews_per_day, learning_steps, ease_bonus
+            FROM settings
+            WHERE user_id = %s
+        """, (user_id,))
+        updated_settings_data = cur.fetchone()
+
+        updated_profile_data = dict(updated_user_data)
+        updated_profile_data['settings'] = updated_settings_data
+        if updated_profile_data.get('date_of_birth'):
+            updated_profile_data['date_of_birth'] = updated_profile_data['date_of_birth'].strftime('%Y-%m-%d')
+
+        return jsonify(success=True, message='Profile updated successfully', profile=updated_profile_data)
+
+    except Exception as e:
+        mysql.connection.rollback()
+        print(f"Error updating user profile for user {user_id}: {e}")
+        return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
+    finally:
+        cur.close()
+
 @app.route('/results')
 @login_required
 def results():
