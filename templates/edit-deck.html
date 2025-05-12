@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- Link to global CSS -->
+    <link rel="stylesheet" href="{{url_for('static', filename='css/global.css')}}" />
+    <!-- Link to create-deck CSS (if still needed for base layout, can often be removed if edit-deck.css is comprehensive) -->
+    <link rel="stylesheet" href="{{url_for('static', filename='css/create-deck.css')}}" />
+    <!-- **** ADD LINK TO NEW EDIT-DECK CSS **** -->
+    <link rel="stylesheet" href="{{url_for('static', filename='css/edit-deck.css')}}" />
+    <title>Edit Deck - NeuroFlash</title>
+
+    <style>
+      .card-item { margin-bottom: 20px; border: 1px solid #eee; padding: 15px; border-radius: 8px; background-color: #fff;} 
+         .card-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #eee;} 
+     .card-item-header h4 { margin: 0; font-size: 0.9em; color: #fff; } 
+        .card-preview label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.85em;} 
+        .card-preview textarea { width: 100%; min-height: 60px; } 
+        .deck-info-header { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #ccc; } 
+    </style> 
+
+  </head>
+
+  <body>
+    <div class="app-container">
+      <!-- Sidebar Navigation (same as create-deck) -->
+      <nav class="sidebar">
+        <div class="logo">
+          <h1>Neuro<span>Flash</span></h1>
+        </div>
+        <ul class="nav-links">
+            <li><a href="/dashboard"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
+            <li><a href="/study"><i class="fas fa-book-open"></i><span>Study</span></a></li>
+            <li><a href="/results"><i class="fas fa-chart-line"></i><span>Results</span></a></li>
+            <li><a href="/profile"><i class="fas fa-user"></i><span>Profile</span></a></li>
+        </ul>
+      </nav>
+
+      <main class="main-content">
+        <header class="content-header">
+          <h2>Edit Deck</h2>
+          <div class="header-actions">
+            <!-- Maybe save changes to deck info button here -->
+             <!-- <button class="btn primary-btn" id="saveDeckChanges" style="display: none;">Save Deck Info</button> -->
+            <button class="btn secondary-btn" onclick="location.href='/dashboard'">Back to Dashboard</button>
+          </div>
+        </header>
+
+        <div class="create-deck-container"> <!-- Consider renaming this class if it's confusing, or ensure styles are specific enough -->
+          <!-- Deck Info (potentially editable later) -->
+          <div class="deck-settings deck-info-header"> <!-- deck-settings might be from create-deck.css -->
+             <h3 id="deck-name-display">Loading...</h3>
+             <p id="deck-description-display"></p> <!-- Removed inline style -->
+             <div class="tags-list" id="tagsListDisplay"></div>
+             <!-- Add edit button for deck info later if needed -->
+          </div>
+
+          <!-- Cards Section -->
+          <div class="cards-section">
+            <div class="section-header">
+              <h3>Flashcards (<span id="card-count">0</span>)</h3>
+              <button class="btn secondary-btn" id="addCardBtn">
+                <i class="fas fa-plus"></i> Add New Card
+              </button>
+            </div>
+
+            <!-- Where cards will be listed -->
+            <div class="cards-list" id="cardsListContainer">
+                <p>Loading cards...</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Include a new JS file for this page -->
+    <script src="{{url_for('static', filename='js/edit-deck.js')}}"></script>
+  </body>
+</html>

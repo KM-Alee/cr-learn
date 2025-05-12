@@ -60,6 +60,253 @@ def dashboard():
 def createDeck():
     return render_template('create-deck.html')
 
+@app.route('/decks/<int:deck_id>/edit')
+@login_required
+def edit_deck_page(deck_id):
+    # We just need to pass the deck_id to the template.
+    # The actual deck data and cards will be fetched via API by the frontend JS.
+    # Verify the user owns this deck first for security
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT user_id FROM decks WHERE id = %s", (deck_id,))
+    deck = cur.fetchone()
+    cur.close()
+
+    if not deck:
+        flash("Deck not found.", "error")
+        return redirect(url_for('dashboard'))
+    if deck['user_id'] != session['user_id']:
+        flash("You do not have permission to edit this deck.", "error")
+        return redirect(url_for('dashboard'))
+        
+    return render_template('edit-deck.html', deck_id=deck_id)
+
+def parse_field_values(field_values_json):
+    try:
+        return json.loads(field_values_json)
+    except (json.JSONDecodeError, TypeError):
+        # Handle cases where it might not be valid JSON or is None
+        # Return a default structure or None based on expected usage
+        return {'Front': 'Error: Invalid data', 'Back': ''} 
+
+@app.route('/api/decks/<int:deck_id>/cards', methods=['GET'])
+@login_required
+def api_get_deck_cards(deck_id):
+    user_id = session['user_id']
+    cur = mysql.connection.cursor()
+    try:
+        # First, verify ownership and get deck details
+        cur.execute("""
+            SELECT d.id, d.name, d.description, GROUP_CONCAT(DISTINCT t.name SEPARATOR ', ') as tags
+            FROM decks d
+            LEFT JOIN deck_tags dt ON d.id = dt.deck_id
+            LEFT JOIN tags t ON dt.tag_id = t.id
+            WHERE d.id = %s AND d.user_id = %s
+            GROUP BY d.id
+        """, (deck_id, user_id))
+        deck_info = cur.fetchone()
+
+        if not deck_info:
+            return jsonify(success=False, errors={'general': 'Deck not found or access denied'}), 404
+
+        # Now, get the cards (notes associated with flashcards in this deck)
+        cur.execute("""
+            SELECT 
+                n.id as note_id, 
+                f.id as flashcard_id, 
+                n.field_values,
+                f.card_type, 
+                f.due_date,
+                f.ease_factor,
+                f.intervals,
+                f.reps,
+                f.lapses,
+                f.last_reviewed
+            FROM flashcards f
+            JOIN notes n ON f.note_id = n.id
+            WHERE f.deck_id = %s AND n.user_id = %s 
+            ORDER BY n.created_at ASC 
+        """, (deck_id, user_id)) # Ensure note also belongs to user
+        
+        cards_raw = cur.fetchall()
+        
+        # Parse the field_values JSON for each card
+        cards_list = []
+        for card_raw in cards_raw:
+            card_data = dict(card_raw) # Make it a mutable dict
+            field_values = parse_field_values(card_data.get('field_values'))
+            # Structure the response clearly
+            cards_list.append({
+                'note_id': card_data['note_id'],
+                'flashcard_id': card_data['flashcard_id'],
+                'front': field_values.get('Front', ''), # Extract front/back assuming 'Basic' note type
+                'back': field_values.get('Back', ''),
+                'card_type': card_data.get('card_type'),
+                'due_date': card_data.get('due_date'),
+                # Include other flashcard fields if needed by frontend
+            })
+
+        return jsonify(success=True, deck=deck_info, cards=cards_list)
+
+    except Exception as e:
+        print(f"Error fetching deck cards: {e}")
+        return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
+    finally:
+        cur.close()
+
+
+@app.route('/api/notes/<int:note_id>', methods=['PUT'])
+@login_required
+def api_update_note(note_id):
+    user_id = session['user_id']
+    data = request.get_json()
+
+    if not data:
+        return jsonify(success=False, errors={'general': 'Invalid request format, JSON expected'}), 400
+
+    front_text = data.get('front')
+    back_text = data.get('back')
+
+    if not front_text or not back_text: # Allow empty? For now, require both.
+        return jsonify(success=False, errors={'content': 'Front and Back text are required'}), 400
+
+    cur = mysql.connection.cursor()
+    try:
+        # Verify user owns the note
+        cur.execute("SELECT id FROM notes WHERE id = %s AND user_id = %s", (note_id, user_id))
+        note = cur.fetchone()
+        if not note:
+            return jsonify(success=False, errors={'note': 'Note not found or access denied'}), 404
+
+        # Assuming this note is of a type where 'Front' and 'Back' are the fields
+        field_values_json = json.dumps({'Front': front_text, 'Back': back_text})
+
+        cur.execute(
+            "UPDATE notes SET field_values = %s WHERE id = %s",
+            (field_values_json, note_id)
+        )
+        mysql.connection.commit()
+        
+        # Optionally, fetch and return the updated note/flashcard data
+        # For now, just success
+        updated_card_data = {
+            'note_id': note_id,
+            'front': front_text,
+            'back': back_text,
+        }
+        return jsonify(success=True, message='Note updated successfully', card=updated_card_data)
+
+    except Exception as e:
+        mysql.connection.rollback()
+        print(f"Error updating note: {e}")
+        return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
+    finally:
+        cur.close()
+
+@app.route('/api/notes/<int:note_id>', methods=['DELETE'])
+@login_required
+def api_delete_note(note_id):
+    user_id = session['user_id']
+    cur = mysql.connection.cursor()
+    try:
+        # Verify user owns the note
+        cur.execute("SELECT id FROM notes WHERE id = %s AND user_id = %s", (note_id, user_id))
+        note = cur.fetchone()
+        if not note:
+            return jsonify(success=False, errors={'note': 'Note not found or access denied'}), 404
+
+        # The ON DELETE CASCADE on flashcards.note_id should handle flashcard deletion.
+        # Also ON DELETE CASCADE for note_tags.
+        cur.execute("DELETE FROM notes WHERE id = %s", (note_id,))
+        mysql.connection.commit()
+
+        if cur.rowcount > 0:
+            return jsonify(success=True, message='Note and associated flashcards deleted successfully')
+        else:
+            # Should not happen if ownership check passed and note existed, but as a safeguard
+            return jsonify(success=False, message='Note could not be deleted or was already deleted'), 400
+
+
+    except Exception as e:
+        mysql.connection.rollback()
+        print(f"Error deleting note: {e}")
+        return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
+    finally:
+        cur.close()
+
+@app.route('/api/decks/<int:deck_id>/cards', methods=['POST'])
+@login_required
+def api_add_card_to_deck(deck_id):
+    user_id = session['user_id']
+    data = request.get_json()
+
+    if not data:
+        return jsonify(success=False, errors={'general': 'Invalid request format, JSON expected'}), 400
+
+    front_text = data.get('front')
+    back_text = data.get('back')
+
+    if not front_text or not back_text:
+        return jsonify(success=False, errors={'content': 'Front and Back text are required'}), 400
+
+    cur = mysql.connection.cursor()
+    try:
+        # Verify user owns the deck
+        cur.execute("SELECT id FROM decks WHERE id = %s AND user_id = %s", (deck_id, user_id))
+        deck = cur.fetchone()
+        if not deck:
+            return jsonify(success=False, errors={'deck': 'Deck not found or access denied'}), 404
+
+        # Assume default note_type_id = 1 (Basic)
+        default_note_type_id = 1 
+        # Ensure this note type exists (as done in api_create_deck, or manage note types properly)
+        cur.execute("SELECT id FROM note_types WHERE id = %s", (default_note_type_id,))
+        if not cur.fetchone():
+             cur.execute( # Simplified creation
+                "INSERT IGNORE INTO note_types (id, name, fields, templates) VALUES (%s, %s, %s, %s)",
+                (default_note_type_id, 'Basic', '["Front", "Back"]', '{"Default Card": {"front_template": "{{Front}}", "back_template": "{{Back}}"}}')
+            )
+
+        field_values_json = json.dumps({'Front': front_text, 'Back': back_text})
+
+        cur.execute(
+            "INSERT INTO notes (user_id, note_type_id, field_values) VALUES (%s, %s, %s)",
+            (user_id, default_note_type_id, field_values_json)
+        )
+        note_id = cur.lastrowid
+
+        cur.execute(
+            """
+            INSERT INTO flashcards (note_id, deck_id, card_type, due_date, ease_factor, reps, intervals)
+            VALUES (%s, %s, 'new', CURDATE(), 2.5, 0, 0)
+            """,
+            (note_id, deck_id)
+        )
+        flashcard_id = cur.lastrowid
+        mysql.connection.commit()
+
+        cur.execute("SELECT due_date FROM flashcards WHERE id = %s", (flashcard_id,))
+        flashcard_info = cur.fetchone()
+        due_date_str = flashcard_info['due_date'].strftime('%Y-%m-%d') if flashcard_info and flashcard_info['due_date'] else datetime.today().strftime('%Y-%m-%d')
+
+
+        new_card_data = {
+            'note_id': note_id,
+            'flashcard_id': flashcard_id,
+            'front': front_text,  # These are from the input
+            'back': back_text,    # These are from the input
+            'card_type': 'new',   # This is hardcoded for new cards
+            'due_date': due_date_str # Make sure this is a string if JS expects it
+        }
+        return jsonify(success=True, message='Card added successfully', card=new_card_data), 201
+
+    except Exception as e:
+        mysql.connection.rollback()
+        print(f"Error adding card to deck: {e}")
+        return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
+    finally:
+        cur.close()
+
+
 @app.route('/profile')
 @login_required
 def profile():

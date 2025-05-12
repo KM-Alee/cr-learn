@@ -1,0 +1,213 @@
+/* static/css/edit-deck.css */
+
+/* Reuse create-deck layout structure */
+.create-deck-container {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: var(--spacing-xl); /* Uses variable from global/create css */
+}
+
+.section-title {
+  color: green; /* Changes text color of elements with class "section-title" to green */
+}
+/* General styling for the main content sections */
+/* Aligning with .deck-settings, .cards-section from create-deck.css */
+.main-content .deck-info-header, /* Target the specific header section */
+.main-content .cards-section { /* Target the cards section */
+  background-color: var(--color-gray-200); /* Uses variable */
+  border-radius: var(--border-radius-md); /* Uses variable */
+  padding: var(--spacing-lg); /* Uses variable */
+  box-shadow: var(--shadow-md); /* Optional: Add subtle shadow if defined in global */
+}
+
+
+/* --- Deck Info Header Styling --- */
+/* This section is similar to .deck-settings but for display */
+.deck-info-header {
+  margin-bottom: var(--spacing-xl); /* Ensure space below this section */
+  border-bottom: none; /* Remove the border from the previous attempt */
+}
+
+.deck-info-header h3 {
+  margin-top: 0;
+  margin-bottom: var(--spacing-xs); /* Uses variable */
+  color: var(--color-foreground); /* Uses variable */
+  font-size: var(--font-size-lg); /* Optional: Adjust font size */
+}
+
+.deck-info-header p {
+  margin-bottom: var(--spacing-md); /* Uses variable */
+  color: var(--color-text-secondary); /* Uses a variable for less prominent text */
+  line-height: 1.5;
+  font-size: var(--font-size-base); /* Uses variable */
+}
+
+/* Tags styling within the deck info header */
+.deck-info-header .tags-list { /* Assuming the container for tags is still tags-list */
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs); /* Uses variable */
+  margin-top: var(--spacing-sm);
+}
+
+.deck-info-header .tags-list .tag {
+  background-color: var(--color-secondary); /* Use a different color for info tags? */
+  color: var(--color-background);
+  padding: 4px var(--spacing-sm); /* Uses variable */
+  border-radius: var(--border-radius-lg); /* More rounded tags */
+  font-size: var(--font-size-sm); /* Uses variable */
+  font-weight: 500;
+}
+
+
+/* --- Cards Section Header --- */
+/* Aligning with .section-header from create-deck.css */
+.cards-section .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md); /* Uses variable */
+  padding-bottom: var(--spacing-sm); /* Uses variable */
+  border-bottom: 1px solid var(--color-gray-300); /* Uses variable */
+}
+
+.cards-section .section-header h3 {
+    margin: 0;
+    color: var(--color-foreground); /* Uses variable */
+    font-size: var(--font-size-base); /* Uses variable */
+}
+
+/* --- Individual Card Styling --- */
+/* Aligning with .card-item from create-deck.css */
+.cards-list .card-item {
+  background-color: var(--color-gray-300); /* Uses variable */
+  border-radius: var(--border-radius-sm); /* Uses variable */
+  padding: var(--spacing-md); /* Uses variable */
+  margin-bottom: var(--spacing-md); /* Uses variable */
+  box-shadow: var(--shadow-sm); /* Optional: Add subtle shadow if defined in global */
+  transition: transform 0.2s ease, box-shadow 0.2s ease; /* Add transition for hover effect */
+  position: relative; /* Needed for potential absolute positioning of actions later */
+}
+
+.cards-list .card-item:hover {
+    transform: translateY(-3px); /* Slight lift on hover */
+    box-shadow: var(--shadow-md); /* More prominent shadow on hover */
+}
+
+
+/* Card Item Header (Edit page specific structure) */
+.card-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md); /* Uses variable */
+  padding-bottom: var(--spacing-sm); /* Uses variable */
+  border-bottom: 1px solid var(--color-gray-400); /* Slightly darker border */
+}
+
+.card-item-header h4 {
+  margin: 0;
+  font-size: var(--font-size-sm); /* Uses variable */
+  color: var(--color-text-secondary); /* Uses variable */
+  font-weight: 600;
+}
+
+.card-item-header .btn.icon-btn {
+    padding: var(--spacing-xs); /* Smaller padding for icon buttons */
+    margin-left: var(--spacing-sm); /* Space between icon buttons */
+    color: var(--color-gray-500); /* Uses variable */
+}
+.card-item-header .btn.icon-btn:hover {
+    color: var(--color-primary); /* Uses variable */
+}
+.card-item-header .delete-card-btn:hover {
+    color: var(--color-danger); /* Uses variable for danger color */
+}
+
+
+/* Card Content Display View */
+.card-content-display {
+    line-height: 1.6;
+    font-size: var(--font-size-base); /* Uses variable */
+    color: var(--color-foreground); /* Ensure text color */
+}
+.card-content-display strong {
+    color: var(--color-foreground); /* Uses variable */
+    font-weight: 600;
+}
+.card-content-display p {
+    margin: 2px 0 10px 0; /* Adjust spacing around content */
+    padding-left: var(--spacing-sm); /* Uses variable */
+    color: var(--color-foreground); /* Ensure text color */
+}
+
+
+/* Card Content Edit View */
+.card-content-edit {
+    margin-top: var(--spacing-sm); /* Uses variable */
+}
+
+.card-content-edit .card-side {
+  margin-bottom: var(--spacing-md); /* Uses variable */
+  background-color: var(--color-gray-200); /* Uses variable (lighter background for input area) */
+  border-radius: var(--border-radius-sm); /* Uses variable */
+  padding: var(--spacing-sm); /* Uses variable */
+}
+
+.card-content-edit label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs); /* Uses variable */
+  font-size: var(--font-size-sm); /* Uses variable */
+  color: var(--color-foreground); /* Uses variable */
+}
+
+.card-content-edit textarea {
+  width: 100%;
+  min-height: 80px; /* Adjusted min-height */
+  padding: var(--spacing-sm); /* Uses variable */
+  border: 1px solid var(--color-gray-300); /* Uses variable */
+  border-radius: var(--border-radius-sm); /* Uses variable */
+  font-size: var(--font-size-base); /* Uses variable */
+  line-height: 1.5;
+  resize: vertical;
+  color: var(--color-foreground); /* Ensure text color */
+  background-color: var(--color-background); /* Use background variable or white */
+}
+
+.card-content-edit textarea:focus {
+    border-color: var(--color-primary); /* Uses variable */
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(var(--color-primary-rgb), 0.25); /* Uses variable for color and transparency */
+}
+
+
+.card-content-edit .btn {
+    margin-right: var(--spacing-sm); /* Uses variable */
+    margin-top: var(--spacing-xs); /* Uses variable */
+}
+
+/* New Card Form Specifics */
+.new-card-form {
+    border-left: 4px solid var(--color-accent); /* Use accent color variable */
+    background-color: var(--color-gray-100); /* Lighter background for new form */
+}
+
+.new-card-form .card-item-header h4 {
+    color: var(--color-accent); /* Match border color */
+}
+
+/* Ensure text color consistency everywhere within main */
+/* This acts as a stronger reset */
+.main-content * {
+    color: var(--color-foreground);
+}
+
+/* Specific elements might need overrides if the above is too broad */
+.main-content h2 { color: var(--color-heading); } /* Use a specific heading color if defined */
+.main-content .btn { color: initial; } /* Buttons might have their own text colors */
+.main-content .btn.primary-btn { color: var(--color-background); }
+.main-content .btn.secondary-btn { color: var(--color-primary); }
+.main-content .btn.icon-btn { color: var(--color-gray-500); } /* Override for icon buttons */
+.main-content a { color: var(--color-link); text-decoration: none; } /* Link styling */
+.main-content a:hover { text-decoration: underline; }
