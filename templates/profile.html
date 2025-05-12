@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="{{url_for('static', filename='css/global.css')}}" />
+    <link rel="stylesheet" href="{{url_for('static', filename='css/profile.css')}}" />
+    <title>Profile - NeuroFlash</title>
+  </head>
+
+  <body>
+    <div class="app-container">
+      <nav class="sidebar">
+        <div class="logo">
+          <h1>Neuro<span>Flash</span></h1>
+        </div>
+        <ul class="nav-links">
+          <li>
+            <a href="/dashboard">
+              <i class="fas fa-home"></i>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li>
+            <a href="/study">
+              <i class="fas fa-book-open"></i>
+              <span>Study</span>
+            </a>
+          </li>
+          <li>
+            <a href="/results">
+              <i class="fas fa-chart-line"></i>
+              <span>Results</span>
+            </a>
+          </li>
+          <li class="active">
+            <a href="/profile">
+              <i class="fas fa-user"></i>
+              <span>Profile</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <main class="main-content">
+        <header class="content-header">
+          <h2>Profile Settings</h2>
+          <button class="btn primary-btn" id="saveChanges">Save Changes</button>
+        </header>
+
+        <div class="profile-container">
+          <div class="profile-section">
+            <div class="profile-header">
+              <div class="profile-avatar">
+                <img
+                  src="https://via.placeholder.com/100"
+                  alt="Profile Picture"
+                  id="avatarImg"
+                />
+                <button class="change-avatar-btn" id="changeAvatar">
+                  <i class="fas fa-camera"></i>
+                </button>
+                <input
+                  type="file"
+                  id="avatarInput"
+                  accept="image/*"
+                  style="display: none"
+                />
+              </div>
+              <div class="profile-info">
+                <h3 id="profileName">John Doe</h3>
+                <p id="profileEmail">john.doe@example.com</p>
+              </div>
+            </div>
+
+            <form class="profile-form" id="profileForm">
+              <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" value="John Doe" />
+              </div>
+              <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" value="john.doe@example.com" />
+              </div>
+              <div class="form-group">
+                <label for="timezone">Timezone</label>
+                <select id="timezone">
+                  <option value="UTC-8">Pacific Time (UTC-8)</option>
+                  <option value="UTC-5">Eastern Time (UTC-5)</option>
+                  <option value="UTC+0">UTC</option>
+                  <option value="UTC+1">Central European Time (UTC+1)</option>
+                  <option value="UTC+8">China Standard Time (UTC+8)</option>
+                </select>
+              </div>
+            </form>
+          </div>
+
+          <div class="profile-section">
+            <h3>Preferences</h3>
+            <div class="preferences-list">
+              <div class="preference-item">
+                <div class="preference-info">
+                  <h4>Dark Mode</h4>
+                  <p>Switch between light and dark themes</p>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="darkModeToggle" />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="preference-item">
+                <div class="preference-info">
+                  <h4>Email Notifications</h4>
+                  <p>Receive study reminders and updates</p>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="emailNotificationsToggle" />
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-section danger-zone">
+            <h3>Danger Zone</h3>
+            <div class="danger-actions">
+              <div class="danger-action">
+                <div class="danger-info">
+                  <h4>Delete Account</h4>
+                  <p>Permanently delete your account and all data</p>
+                </div>
+                <button class="btn danger-btn" id="deleteAccount">
+                  Delete Account
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="{{url_for('static', filename='js/profile.js')}}"></script>
+  </body>
+</html>

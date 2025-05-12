@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <link rel="stylesheet" href="{{url_for('static', filename='css/global.css')}}" />
+    <link rel="stylesheet" href="{{url_for('static', filename='css/animation.css')}}" />
+    <link rel="stylesheet" href="{{url_for('static', filename='css/study.css')}}" />
+    <title>Study - NeuroFlash</title>
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Sidebar Navigation -->
+      <nav class="sidebar">
+        <div class="logo">
+          <h1>Neuro<span>Flash</span></h1>
+        </div>
+        <ul class="nav-links">
+          <li>
+            <a href="/dashboard">
+              <i class="fas fa-home"></i>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li class="active">
+            <a href="/study">
+              <i class="fas fa-book-open"></i>
+              <span>Study</span>
+            </a>
+          </li>
+          <li>
+            <a href="/results">
+              <i class="fas fa-chart-line"></i>
+              <span>Results</span>
+            </a>
+          </li>
+          <li>
+            <a href="/profile">
+              <i class="fas fa-user"></i>
+              <span>Profile</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      
+      <!-- Main Content -->
+      <main class="main-content">
+        <header class="content-header">
+          <div class="deck-info">
+            <h2 id="deck-title">JavaScript Basics</h2>
+            <p id="card-counter">Card 1 of 50</p>
+          </div>
+          <div class="study-progress">
+            <div class="progress" style="width: 2%"></div>
+          </div>
+        </header>
+
+        <!-- Flashcard Container -->
+        <div class="study-container">
+          <div class="flashcard" id="flashcard">
+            <div class="card-inner">
+              <div class="card-front" id="card-front">
+                <p>What is a closure in JavaScript?</p>
+              </div>
+              <div class="card-back" id="card-back">
+                <p>A function that retains access to its lexical scope even when the function is executed outside that scope.</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Controls -->
+          <div class="study-controls">
+            <button class="nav-btn" id="prev-card">
+              <i class="fas fa-arrow-left"></i> Previous
+            </button>
+            <button class="control-btn" data-difficulty="hard">
+              <i class="fas fa-times"></i> Hard
+            </button>
+            <button class="control-btn" data-difficulty="medium">
+              <i class="fas fa-clock"></i> Good
+            </button>
+            <button class="control-btn" data-difficulty="easy">
+              <i class="fas fa-check"></i> Easy
+            </button>
+            <button class="nav-btn" id="next-card">
+              Next <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+          
+          <!-- Deck Selection -->
+          <div class="deck-selection">
+            <label for="deck-select">Choose a deck:</label>
+            <select id="deck-select">
+              <option value="javascript">JavaScript Basics</option>
+              <option value="python">Python Fundamentals</option>
+              <option value="data-structures">Data Structures</option>
+              <option value="algorithms">Algorithms</option>
+              <option value="machine-learning">Machine Learning</option>
+            </select>
+          </div>
+        </div>
+      </main>
+    </div>
+    
+  <script src="{{url_for('static', filename='js/study.js')}}"></script>
+  </body>
+</html>

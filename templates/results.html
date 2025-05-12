@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="{{url_for('static', filename='css/global.css')}}" />
+    <link rel="stylesheet" href="{{url_for('static', filename='css/results.css')}}" />
+    <title>Results - NeuroFlash</title>
+  </head>
+
+  <body>
+    <div class="app-container">
+      <nav class="sidebar">
+        <div class="logo">
+          <h1>Neuro<span>Flash</span></h1>
+        </div>
+        <ul class="nav-links">
+          <li>
+            <a href="/dashboard">
+              <i class="fas fa-home"></i>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li>
+            <a href="/study">
+              <i class="fas fa-book-open"></i>
+              <span>Study</span>
+            </a>
+          </li>
+          <li class="active">
+            <a href="/results">
+              <i class="fas fa-chart-line"></i>
+              <span>Results</span>
+            </a>
+          </li>
+          <li>
+            <a href="/profile">
+              <i class="fas fa-user"></i>
+              <span>Profile</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <main class="main-content">
+        <header class="content-header">
+          <h2>Study Results</h2>
+          <div class="date-filter">
+            <button class="btn secondary-btn">
+              Last 7 Days <i class="fas fa-chevron-down"></i>
+            </button>
+          </div>
+        </header>
+
+        <div class="results-grid">
+          <div class="result-card performance">
+            <h3>Performance Overview</h3>
+            <div class="chart-container">
+              <canvas id="performanceChart"></canvas>
+            </div>
+          </div>
+
+          <div class="result-card stats">
+            <h3>Study Statistics</h3>
+            <div class="stats-list">
+              <div class="stat-item">
+                <span class="stat-label">Total Cards Reviewed</span>
+                <span class="stat-value">450</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Average Accuracy</span>
+                <span class="stat-value">85%</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Study Streak</span>
+                <span class="stat-value">7 days</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Time Studied</span>
+                <span class="stat-value">12.5 hours</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="result-card recent-activity">
+            <h3>Recent Activity</h3>
+            <div class="activity-list">
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <i class="fas fa-check"></i>
+                </div>
+                <div class="activity-details">
+                  <h4>JavaScript Basics</h4>
+                  <p>Completed 25 cards • 90% accuracy</p>
+                  <span class="activity-time">2 hours ago</span>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <i class="fas fa-clock"></i>
+                </div>
+                <div class="activity-details">
+                  <h4>Python Data Structures</h4>
+                  <p>Studied for 30 minutes</p>
+                  <span class="activity-time">Yesterday</span>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <i class="fas fa-plus"></i>
+                </div>
+                <div class="activity-details">
+                  <h4>New Deck: React Hooks</h4>
+                  <p>Created 30 new flashcards</p>
+                  <span class="activity-time">2 days ago</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{url_for('static', filename='js/results.js')}}"></script>
+  </body>
+</html>

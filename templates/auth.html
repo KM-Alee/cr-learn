@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <link rel="stylesheet" href="{{url_for('static', filename='css/global.css')}}" />
+    <link rel="stylesheet" href="{{url_for('static', filename='css/auth.css')}}" />
+    <title>Login / Sign Up - NeuroFlash</title>
+  </head>
+
+  <body>
+    <div class="auth-page">
+      <main class="auth-container">
+        <div class="auth-card fade-in-up">
+          <div class="logo">
+            <h1>Neuro<span>Flash</span></h1>
+          </div>
+          <div class="auth-tabs">
+            <button class="auth-tab {% if tab != 'signup' %}active{% endif %}" data-tab="login">Login</button>
+            <button class="auth-tab {% if tab == 'signup' %}active{% endif %}" data-tab="signup">Sign Up</button>
+          </div>
+
+          <div class="auth-forms-container">
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form" style="display: {% if tab != 'signup' %}flex{% else %}none{% endif %};">
+              <div class="form-group fade-in-up delay-100">
+                <label for="login-email">Email</label>
+                <input type="email" id="login-email" name="email" required />
+                <div class="error-message">
+                  Please enter a valid email address
+                </div>
+              </div>
+              <div class="form-group fade-in-up delay-200">
+                <label for="login-password">Password</label>
+                <input
+                  type="password"
+                  id="login-password"
+                  name="password"
+                  required
+                />
+                <div class="error-message">Please enter your password</div>
+                <a href="#" class="forgot-password">Forgot password?</a>
+              </div>
+              <div class="remember-me fade-in-up delay-300">
+                <input type="checkbox" id="remember" name="remember" />
+                <label for="remember">Remember me</label>
+              </div>
+              <button
+                type="submit"
+                class="btn primary-btn full-width fade-in-up delay-400"
+              >
+                <span class="btn-text">Login</span>
+                <span class="btn-loader"></span>
+              </button>
+            </form>
+
+            <!-- Sign Up Form -->
+            <form id="signup-form" class="auth-form" style="display: {% if tab == 'signup' %}flex{% else %}none{% endif %};">
+              <div class="form-group fade-in-up delay-100">
+                <label for="signup-name">Full Name</label>
+                <input type="text" id="signup-name" name="name" required />
+                <div class="error-message">Please enter your name</div>
+              </div>
+              <div class="form-group fade-in-up delay-200">
+                <label for="signup-email">Email</label>
+                <input type="email" id="signup-email" name="email" required />
+                <div class="error-message">
+                  Please enter a valid email address
+                </div>
+              </div>
+              <div class="form-group fade-in-up delay-250">
+                <label for="signup-dob">Date of Birth</label>
+                <input type="date" id="signup-dob" name="dob" required />
+                <div class="error-message">
+                  Please enter your date of birth
+                </div>
+              </div>
+              <div class="form-group fade-in-up delay-275">
+                <label for="signup-gender">Gender</label>
+                <select id="signup-gender" name="gender" required>
+                  <option value="">Select gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="non-binary">Non-binary</option>
+                  <option value="other">Other</option>
+                  <option value="prefer-not-to-say">Prefer not to say</option>
+                </select>
+                <div class="error-message">
+                  Please select your gender
+                </div>
+              </div>
+              <div class="form-group fade-in-up delay-285">
+                <label for="signup-country">Country</label>
+                <select id="signup-country" name="country" required>
+                  <option value="">Select country</option>
+                </select>
+                <div class="error-message">
+                  Please select your country
+                </div>
+              </div>
+              <div class="form-group fade-in-up delay-290">
+                <label for="signup-city">City</label>
+                <input type="text" id="signup-city" name="city" required />
+                <div class="error-message">
+                  Please enter your city
+                </div>
+              </div>
+              <div class="form-group fade-in-up delay-300">
+                <label for="signup-password">Password</label>
+                <input
+                  type="password"
+                  id="signup-password"
+                  name="password"
+                  required
+                />
+                <div class="error-message">
+                  Password must be at least 8 characters
+                </div>
+                <div class="password-strength">
+                  <div class="strength-meter">
+                    <span style="width: 0%"></span>
+                  </div>
+                  <div class="strength-text">Weak password</div>
+                </div>
+              </div>
+              <div class="form-group fade-in-up delay-400">
+                <label for="signup-confirm">Confirm Password</label>
+                <input
+                  type="password"
+                  id="signup-confirm"
+                  name="confirm-password"
+                  required
+                />
+                <div class="error-message">Passwords do not match</div>
+              </div>
+              <button
+                type="submit"
+                class="btn primary-btn full-width fade-in-up delay-500"
+              >
+                <span class="btn-text">Create Account</span>
+                <span class="btn-loader"></span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="{{url_for('static', filename='js/auth.js')}}"></script>
+  </body>
+</html>

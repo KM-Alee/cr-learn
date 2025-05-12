@@ -1,0 +1,205 @@
+/* Study Page Styles */
+.content-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xl);
+}
+
+.deck-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.study-progress {
+  width: 100%;
+  height: 6px;
+  background-color: var(--color-gray-300);
+  border-radius: var(--border-radius-full);
+  overflow: hidden;
+}
+
+.progress {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-quaternary));
+  transition: width 0.3s ease;
+}
+
+/* Flashcard Container */
+.study-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xl);
+  padding: var(--spacing-lg);
+}
+
+/* Flashcard */
+.flashcard {
+  width: 100%;
+  max-width: 600px;
+  height: 400px;
+  perspective: 1200px;
+  position: relative;
+  transition: transform 0.4s ease-in-out;
+}
+
+.card-inner {
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.6s ease-in-out;
+  transform-style: preserve-3d;
+  position: relative;
+  box-shadow: var(--shadow-lg);
+  border-radius: var(--border-radius-lg);
+}
+
+.flashcard.flipped .card-inner {
+  transform: rotateY(180deg);
+}
+
+.card-front,
+.card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius-lg);
+  transition: background-color 0.3s, transform 0.3s;
+  font-size: var(--font-size-xl);
+  font-weight: 500;
+}
+
+.card-front {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-quaternary));
+  color: var(--color-background);
+}
+
+.card-back {
+  background: linear-gradient(135deg, var(--color-secondary), var(--color-tertiary));
+  color: var(--color-background);
+  transform: rotateY(180deg);
+}
+
+/* Study Controls */
+.study-controls {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Navigation Buttons */
+.nav-btn {
+  background-color: var(--color-gray-200);
+  color: var(--color-foreground);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  font-weight: 600;
+  transition: transform 0.2s, background-color 0.3s, box-shadow 0.3s;
+  box-shadow: var(--shadow-md);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.nav-btn:hover {
+  background-color: var(--color-gray-300);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Control Buttons */
+.control-btn {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  font-weight: 600;
+  transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+  box-shadow: var(--shadow-md);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.control-btn[data-difficulty="hard"] {
+  background-color: var(--color-danger);
+  color: var(--color-background);
+}
+
+.control-btn[data-difficulty="medium"] {
+  background-color: var(--color-warning);
+  color: var(--color-background);
+}
+
+.control-btn[data-difficulty="easy"] {
+  background-color: var(--color-success);
+  color: var(--color-background);
+}
+
+.control-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Deck Selection */
+.deck-selection {
+  margin-top: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+#deck-select {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  background-color: var(--color-gray-200);
+  border: 1px solid var(--color-gray-300);
+  color: var(--color-foreground);
+  font-size: var(--font-size-md);
+  cursor: pointer;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+#deck-select:hover,
+#deck-select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(76, 201, 240, 0.1);
+  outline: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .flashcard {
+    height: 300px;
+  }
+
+  .study-controls {
+    flex-direction: column;
+    width: 100%;
+    max-width: 600px;
+  }
+
+  .nav-btn,
+  .control-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .deck-selection {
+    flex-direction: column;
+  }
+
+  #deck-select {
+    width: 100%;
+  }
+}

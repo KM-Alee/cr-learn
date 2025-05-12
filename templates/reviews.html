@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <link rel="stylesheet" href="{{url_for('static', filename='css/global.css')}}" />
+    <link rel="stylesheet" href="{{url_for('static', filename='css/animation.css')}}" />
+    <link rel="stylesheet" href="{{url_for('static', filename='css/responsive.css')}}" />
+    <link rel="stylesheet" href="{{url_for('static', filename='css/reviews.css')}}" />
+    <title>User Reviews - NeuroFlash</title>
+  </head>
+
+  <body>
+    <div class="app-container">
+      <header>
+        <div class="logo">
+          <h1>Neuro<span>Flash</span></h1>
+        </div>
+        <nav>
+          <div class="mobile-menu-toggle">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="/reviews" class="active">Reviews</a></li>
+            <li class="nav-cta"><a href="/auth">Log In</a></li>
+            <li class="nav-cta primary">
+              <a href="/auth?tab=signup">Sign Up</a>
+            </li>
+          </ul>
+        </nav>
+      </header>
+
+      <main class="reviews-page">
+        <section class="page-header scroll-reveal">
+          <h2 class="gradient-text">What Our Users Say</h2>
+          <p class="section-subtitle">
+            Hear from students, professionals, and lifelong learners who have
+            transformed their learning experience with NeuroFlash
+          </p>
+        </section>
+
+        <section class="reviews-grid scroll-reveal">
+          <div class="review-card fade-in-up">
+            <div class="review-content">
+              <div class="review-stars">
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+              </div>
+              <p>
+                "NeuroFlash helped me ace my medical exams. The spaced
+                repetition algorithm is a game-changer! I've tried many other
+                apps but this one really stands out with its intuitive interface
+                and powerful features."
+              </p>
+            </div>
+            <div class="review-author">
+              <div class="author-avatar">JS</div>
+              <div class="author-info">
+                <h4>John Smith</h4>
+                <p>Medical Student</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="review-card fade-in-up delay-100">
+            <div class="review-content">
+              <div class="review-stars">
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+              </div>
+              <p>
+                "I've tried many flashcard apps, but NeuroFlash's interface and
+                algorithm are by far the best. It's helped me learn Spanish in
+                just a few months, and I'm now able to have basic conversations
+                with native speakers."
+              </p>
+            </div>
+            <div class="review-author">
+              <div class="author-avatar">SD</div>
+              <div class="author-info">
+                <h4>Sarah Davis</h4>
+                <p>Language Learner</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="review-card fade-in-up delay-200">
+            <div class="review-content">
+              <div class="review-stars">
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+              </div>
+              <p>
+                "The progress tracking feature keeps me motivated. I can see how
+                much I'm improving every day! As a software engineer, I need to
+                constantly learn new technologies, and NeuroFlash has been an
+                essential tool in my learning toolkit."
+              </p>
+            </div>
+            <div class="review-author">
+              <div class="author-avatar">MJ</div>
+              <div class="author-info">
+                <h4>Michael Johnson</h4>
+                <p>Software Engineer</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="review-card fade-in-up delay-300">
+            <div class="review-content">
+              <div class="review-stars">
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star-half-alt"></i>
+              </div>
+              <p>
+                "NeuroFlash has transformed how I study for my law exams. The
+                ability to create complex flashcards with images and formatting
+                has been invaluable for memorizing case law and legal
+                principles."
+              </p>
+            </div>
+            <div class="review-author">
+              <div class="author-avatar">AK</div>
+              <div class="author-info">
+                <h4>Amanda Kim</h4>
+                <p>Law Student</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="review-card fade-in-up delay-400">
+            <div class="review-content">
+              <div class="review-stars">
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+              </div>
+              <p>
+                "As a teacher, I recommend NeuroFlash to all my students. It's
+                helped them improve their test scores significantly, and they
+                actually enjoy using it! The collaborative features make it easy
+                to share decks with my class."
+              </p>
+            </div>
+            <div class="review-author">
+              <div class="author-avatar">RB</div>
+              <div class="author-info">
+                <h4>Robert Brown</h4>
+                <p>High School Teacher</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="review-card fade-in-up delay-500">
+            <div class="review-content">
+              <div class="review-stars">
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+              </div>
+              <p>
+                "I've been using NeuroFlash to prepare for my nursing
+                certification exams. The mobile app makes it easy to study on
+                the go, and the spaced repetition algorithm ensures I focus on
+                the material I need to review most."
+              </p>
+            </div>
+            <div class="review-author">
+              <div class="author-avatar">EL</div>
+              <div class="author-info">
+                <h4>Emily Lee</h4>
+                <p>Nursing Student</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="cta-section scroll-reveal">
+          <div class="cta-content">
+            <h3 class="gradient-text">Join thousands of successful learners</h3>
+            <p>
+              Start your learning journey today and see the difference for
+              yourself.
+            </p>
+            <a href="/auth?tab=signup"class="btn primary-btn shake-on-hover">Get Started</a>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <div class="footer-content">
+          <div class="footer-logo">
+            <h2>Flash<span>Learn</span></h2>
+            <p>Learn smarter, not harder.</p>
+            <div class="social-links">
+              <a href="#" class="social-icon"
+                ><i class="fab fa-facebook-f"></i
+              ></a>
+              <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+              <a href="#" class="social-icon"
+                ><i class="fab fa-instagram"></i
+              ></a>
+              <a href="#" class="social-icon"
+                ><i class="fab fa-linkedin-in"></i
+              ></a>
+            </div>
+          </div>
+          <div class="footer-links">
+            <div class="footer-links-column">
+              <h4>Product</h4>
+              <ul>
+                <li><a href="#" class="footer-link">Features</a></li>
+                <li><a href="#" class="footer-link">Pricing</a></li>
+                <li>
+                  <a href="/reviews" class="footer-link">Testimonials</a>
+                </li>
+                <li><a href="#" class="footer-link">FAQ</a></li>
+              </ul>
+            </div>
+            <div class="footer-links-column">
+              <h4>Company</h4>
+              <ul>
+                <li><a href="#" class="footer-link">About</a></li>
+                <li><a href="#" class="footer-link">Careers</a></li>
+                <li><a href="#" class="footer-link">Blog</a></li>
+                <li><a href="#" class="footer-link">Contact</a></li>
+              </ul>
+            </div>
+            <div class="footer-links-column">
+              <h4>Resources</h4>
+              <ul>
+                <li><a href="#" class="footer-link">Support</a></li>
+                <li><a href="#" class="footer-link">Documentation</a></li>
+                <li><a href="#" class="footer-link">Privacy Policy</a></li>
+                <li><a href="#" class="footer-link">Terms of Service</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2025 NeuroFlash. All rights reserved.</p>
+        </div>
+      </footer>
+    </div>
+
+    <script src="{{url_for('static', filename='js/main.js')}}"></script>
+    <script src="{{url_for('static', filename='js/reviews.js')}}"></script>
+  </body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="{{url_for('static', filename='css/global.css')}}" />
+    <link rel="stylesheet" href="{{url_for('static', filename='css/dashboard.css')}}" />
+    <link rel="stylesheet" href="{{url_for('static', filename='css/animation.css')}}" />
+    <title>Dashboard - NeuroFlash</title>
+  </head>
+
+  <body>
+    <div class="app-container">
+      <!-- Navigation -->
+      <nav class="sidebar">
+        <div class="logo">
+          <h1>Neuro<span>Flash</span></h1>
+        </div>
+        <ul class="nav-links">
+          <li class="active">
+            <a href="/dashboard">
+              <i class="fas fa-home"></i>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li>
+            <a href="/study">
+              <i class="fas fa-book-open"></i>
+              <span>Study</span>
+            </a>
+          </li>
+          <li>
+            <a href="/results">
+              <i class="fas fa-chart-line"></i>
+              <span>Results</span>
+            </a>
+          </li>
+          <li>
+            <a href="/profile">
+              <i class="fas fa-user"></i>
+              <span>Profile</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <header class="content-header">
+          <h2>My Decks</h2>
+          <button
+            class="btn primary-btn"
+            onclick="location.href='/create-deck'"
+          >
+            <i class="fas fa-plus"></i> Create New Deck
+          </button>
+        </header>
+
+        <div class="stats-grid">
+          <div class="stat-card fade-in-up">
+            <div class="stat-icon">
+              <i class="fas fa-layer-group"></i>
+            </div>
+            <div class="stat-info">
+              <h3>Total Decks</h3>
+              <p>12</p>
+            </div>
+          </div>
+          <div class="stat-card fade-in-up delay-100">
+            <div class="stat-icon">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-info">
+              <h3>Cards Mastered</h3>
+              <p>234</p>
+            </div>
+          </div>
+          <div class="stat-card fade-in-up delay-200">
+            <div class="stat-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-info">
+              <h3>Study Time</h3>
+              <p>45h</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="decks-grid">
+          <div class="deck-card fade-in-up">
+            <div class="deck-header">
+              <h3>JavaScript Basics</h3>
+              <span class="card-count">50 cards</span>
+            </div>
+            <div class="deck-progress">
+              <div class="progress-bar">
+                <div class="progress" style="width: 75%"></div>
+              </div>
+              <span class="progress-text">75% Mastered</span>
+            </div>
+            <div class="deck-actions">
+              <button
+                class="btn secondary-btn"
+                onclick="location.href='/study'"
+              >
+                Study Now
+              </button>
+              <button class="btn icon-btn">
+                <i class="fas fa-ellipsis-v"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="deck-card fade-in-up delay-100">
+            <div class="deck-header">
+              <h3>Python Fundamentals</h3>
+              <span class="card-count">35 cards</span>
+            </div>
+            <div class="deck-progress">
+              <div class="progress-bar">
+                <div class="progress" style="width: 45%"></div>
+              </div>
+              <span class="progress-text">45% Mastered</span>
+            </div>
+            <div class="deck-actions">
+              <button
+                class="btn secondary-btn"
+                onclick="location.href='/study?deck=python'"
+              >
+                Study Now
+              </button>
+              <button class="btn icon-btn">
+                <i class="fas fa-ellipsis-v"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="deck-card fade-in-up delay-200">
+            <div class="deck-header">
+              <h3>Data Structures</h3>
+              <span class="card-count">25 cards</span>
+            </div>
+            <div class="deck-progress">
+              <div class="progress-bar">
+                <div class="progress" style="width: 30%"></div>
+              </div>
+              <span class="progress-text">30% Mastered</span>
+            </div>
+            <div class="deck-actions">
+              <button
+                class="btn secondary-btn"
+                onclick="location.href='/study?deck=data-structures'"
+              >
+                Study Now
+              </button>
+              <button class="btn icon-btn">
+                <i class="fas fa-ellipsis-v"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="{{url_for('static', filename='js/dashboard.js')}}"></script>
+  </body>
+</html>

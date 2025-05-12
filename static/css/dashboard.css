@@ -1,0 +1,129 @@
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.stat-card {
+  background: linear-gradient(135deg, var(--color-gray-200), var(--color-gray-300));
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.stat-icon {
+  font-size: var(--font-size-3xl);
+  color: var(--color-primary);
+  margin-right: var(--spacing-md);
+}
+
+.stat-info h3 {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-500);
+  margin-bottom: var(--spacing-xs);
+}
+
+.stat-info p {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+}
+
+.decks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.deck-card {
+  background-color: var(--color-gray-200);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.deck-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.deck-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.deck-header h3 {
+  font-size: var(--font-size-lg);
+}
+
+.card-count {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-500);
+}
+
+.deck-progress {
+  margin-bottom: var(--spacing-md);
+}
+
+.progress-bar {
+  height: 4px;
+  background-color: var(--color-gray-300);
+  border-radius: var(--border-radius-full);
+  overflow: hidden;
+}
+
+.progress {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-quaternary));
+}
+
+.progress-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-500);
+  margin-top: var(--spacing-xs);
+}
+
+.deck-actions {
+  display: flex;
+  justify-content: space-between;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: var(--color-gray-500);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.icon-btn:hover {
+  color: var(--color-primary);
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .decks-grid {
+    grid-template-columns: 1fr;
+  }
+}

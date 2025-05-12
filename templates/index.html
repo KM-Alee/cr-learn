@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <link rel="stylesheet" href="{{url_for('static', filename='css/global.css')}}" />
+    <link rel="stylesheet" href="{{url_for('static', filename='css/responsive.css')}}" />
+    <link rel="stylesheet" href="{{url_for('static', filename='css/animation.css')}}" />
+    <title>NeuroFlash - Master Any Subject with Flashcards</title>
+  </head>
+
+  <body>
+    <div class="app-container">
+      <header>
+        <div class="logo">
+          <h1>Neuro<span>Flash</span></h1>
+        </div>
+        <nav>
+          <div class="mobile-menu-toggle">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <ul class="nav-links">
+            <li><a href="/" class="active">Home</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="/reviews">Reviews</a></li>
+            <li class="nav-cta"><a href="/auth">Log In</a></li>
+            <li class="nav-cta primary">
+              <a href="/auth?tab=signup">Sign Up</a>
+            </li>
+          </ul>
+        </nav>
+      </header>
+
+      <main class="home-page">
+        <section class="hero">
+          <div class="hero-content">
+            <h2 class="gradient-text">Master Any Subject with Flashcards</h2>
+            <p>
+              Effective learning through spaced repetition. Create, study, and
+              master flashcards on any topic.
+            </p>
+            <div class="cta-buttons">
+              <a href="/auth?tab=signup" class="btn primary-btn pop-in"
+                >Sign Up</a
+              >
+              <a href="#features" class="btn secondary-btn fade-in"
+                >Learn More</a
+              >
+            </div>
+          </div>
+          <div class="hero-image fade-in-right">
+            <div class="card-stack">
+              <div class="card flip-card">
+                <div class="card-inner">
+                  <div class="card-front">What is spaced repetition?</div>
+                  <div class="card-back">
+                    A learning technique that incorporates increasing intervals
+                    of time between reviews of previously learned material.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="features" class="features-section scroll-reveal">
+          <h3 class="section-title gradient-text">Why Choose NeuroFlash?</h3>
+          <p class="section-subtitle">
+            The smarter way to study and remember everything you learn
+          </p>
+          <div class="features-grid">
+            <div class="feature-card">
+              <i class="fas fa-brain feature-icon"></i>
+              <h4>Effective Learning</h4>
+              <p>
+                Our scientifically proven spaced repetition algorithm helps you
+                remember more with less study time.
+              </p>
+            </div>
+            <div class="feature-card">
+              <i class="fas fa-clock feature-icon"></i>
+              <h4>Save Time</h4>
+              <p>
+                Focus on what you need to learn most with smart scheduling and
+                prioritization.
+              </p>
+            </div>
+            <div class="feature-card">
+              <i class="fas fa-mobile-alt feature-icon"></i>
+              <h4>Study Anywhere</h4>
+              <p>
+                Access your flashcards from any device with a web browser. Your
+                progress syncs automatically.
+              </p>
+            </div>
+            <div class="feature-card">
+              <i class="fas fa-chart-line feature-icon"></i>
+              <h4>Track Progress</h4>
+              <p>
+                Monitor your learning journey with detailed statistics and
+                beautiful, intuitive charts.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="testimonials scroll-reveal">
+          <h3 class="section-title gradient-text">What Our Users Say</h3>
+          <p class="section-subtitle">
+            Read what our community has to say about NeuroFlash
+          </p>
+          <div class="testimonial-slider">
+            <div class="testimonial-card active">
+              <div class="testimonial-content">
+                <p>
+                  "NeuroFlash helped me ace my medical exams. The spaced
+                  repetition algorithm is a game-changer!"
+                </p>
+              </div>
+              <div class="testimonial-author">
+                <div class="author-avatar">JS</div>
+                <div class="author-info">
+                  <h4>John Smith</h4>
+                  <p>Medical Student</p>
+                </div>
+              </div>
+            </div>
+            <div class="testimonial-card">
+              <div class="testimonial-content">
+                <p>
+                  "I've tried many flashcard apps, but NeuroFlash's interface
+                  and algorithm are by far the best."
+                </p>
+              </div>
+              <div class="testimonial-author">
+                <div class="author-avatar">SD</div>
+                <div class="author-info">
+                  <h4>Sarah Davis</h4>
+                  <p>Language Learner</p>
+                </div>
+              </div>
+            </div>
+            <div class="testimonial-card">
+              <div class="testimonial-content">
+                <p>
+                  "The progress tracking feature keeps me motivated. I can see
+                  how much I'm improving every day!"
+                </p>
+              </div>
+              <div class="testimonial-author">
+                <div class="author-avatar">MJ</div>
+                <div class="author-info">
+                  <h4>Michael Johnson</h4>
+                  <p>Software Engineer</p>
+                </div>
+              </div>
+            </div>
+            <div class="testimonial-controls">
+              <button class="prev-testimonial">←</button>
+              <div class="testimonial-dots">
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+              </div>
+              <button class="next-testimonial">→</button>
+            </div>
+          </div>
+          <div class="text-center">
+            <a href="/reviews" class="btn text-btn"
+              >See all reviews <span class="arrow">→</span></a
+            >
+          </div>
+        </section>
+
+        <section class="cta-section scroll-reveal">
+          <div class="cta-content">
+            <h3 class="gradient-text">Ready to supercharge your learning?</h3>
+            <p>
+              Join thousands of students who are already studying smarter, not
+              harder.
+            </p>
+            <a
+              href="/auth?tab=signup"
+              class="btn primary-btn shake-on-hover"
+              >Get Started</a
+            >
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <div class="footer-content">
+          <div class="footer-logo">
+            <h2>Flash<span>Learn</span></h2>
+            <p>Learn smarter, not harder.</p>
+            <div class="social-links">
+              <a href="#" class="social-icon"
+                ><i class="fab fa-facebook-f"></i
+              ></a>
+              <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+              <a href="#" class="social-icon"
+                ><i class="fab fa-instagram"></i
+              ></a>
+              <a href="#" class="social-icon"
+                ><i class="fab fa-linkedin-in"></i
+              ></a>
+            </div>
+          </div>
+          <div class="footer-links">
+            <div class="footer-links-column">
+              <h4>Product</h4>
+              <ul>
+                <li><a href="#" class="footer-link">Features</a></li>
+                <li><a href="#" class="footer-link">Pricing</a></li>
+                <li>
+                  <a href="/reviews" class="footer-link">Testimonials</a>
+                </li>
+                <li><a href="#" class="footer-link">FAQ</a></li>
+              </ul>
+            </div>
+            <div class="footer-links-column">
+              <h4>Company</h4>
+              <ul>
+                <li><a href="#" class="footer-link">About</a></li>
+                <li><a href="#" class="footer-link">Careers</a></li>
+                <li><a href="#" class="footer-link">Blog</a></li>
+                <li><a href="#" class="footer-link">Contact</a></li>
+              </ul>
+            </div>
+            <div class="footer-links-column">
+              <h4>Resources</h4>
+              <ul>
+                <li><a href="#" class="footer-link">Support</a></li>
+                <li><a href="#" class="footer-link">Documentation</a></li>
+                <li><a href="#" class="footer-link">Privacy Policy</a></li>
+                <li><a href="#" class="footer-link">Terms of Service</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2025 NeuroFlash. All rights reserved.</p>
+        </div>
+      </footer>
+    </div>
+
+    <script src="{{url_for('static', filename='js/main.js')}}"></script>
+    <script src="{{url_for('static', filename='js/animations.js')}}"></script>
+  </body>
+</html>
