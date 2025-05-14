@@ -13,11 +13,11 @@
     <title>Dashboard - NeuroFlash</title>
 
     <style>
-        /* Add styles for the context menu */
+        /* Styles for Deck Context Menu */
         .deck-context-menu {
-            position: absolute; /* Position relative to the parent (the button) */
-            top: 100%; /* Position below the button */
-            right: 0; /* Align the right edge of the menu with the right edge of the button */
+            position: absolute;
+            top: 100%;
+            right: 0;
             background-color: var(--color-background);
             border: 1px solid var(--color-gray-300);
             border-radius: var(--border-radius-sm);
@@ -27,26 +27,17 @@
             padding: 5px 0;
             margin: 0;
             min-width: 150px;
-            /* Add transition for smooth appearance */
             opacity: 0;
             visibility: hidden;
             transform: translateY(10px);
             transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
         }
-
-         /* State for visible menu */
         .deck-options-btn.menu-open .deck-context-menu {
              opacity: 1;
              visibility: visible;
              transform: translateY(0);
         }
-
-
-        .deck-context-menu li {
-            margin: 0;
-            padding: 0;
-        }
-
+        .deck-context-menu li { margin: 0; padding: 0; }
         .deck-context-menu button {
             display: flex;
             align-items: center;
@@ -60,43 +51,161 @@
             font-size: var(--font-size-base);
             transition: background-color 0.1s ease;
         }
+        .deck-context-menu button i { margin-right: 10px; width: 15px; text-align: center; color: var(--color-gray-600); }
+        .deck-context-menu button:hover { background-color: var(--color-gray-200); }
+        .deck-context-menu .delete-option { color: var(--color-danger); }
+        .deck-context-menu .delete-option i { color: var(--color-danger); }
+        .btn.icon-btn.deck-options-btn { position: relative; margin: 0; padding: 0 5px; }
 
-        .deck-context-menu button i {
+        /* Styles for Dashboard Tabs */
+        .dashboard-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--color-gray-300);
+        }
+        .tab-button {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background-color: transparent;
+            font-size: 1rem; /* var(--font-size-md) or similar */
+            color: var(--color-gray-700);
+            border-bottom: 3px solid transparent;
             margin-right: 10px;
-            width: 15px;
-            text-align: center;
-             color: var(--color-gray-600);
+            transition: color 0.2s ease, border-bottom-color 0.2s ease;
+            margin-bottom: -1px; /* Align with the bottom border of .dashboard-tabs */
+        }
+        .tab-button:hover {
+            color: var(--color-primary-dark);
+        }
+        .tab-button.active {
+            color: var(--color-primary);
+            border-bottom-color: var(--color-primary);
+            font-weight: 600;
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease-out; /* Simple fade-in for tab content */
+        }
+        .tab-content.active {
+            display: block;
         }
 
-         .deck-context-menu button:hover {
-            background-color: var(--color-gray-200);
-         }
+        /* Styles for Card Browser */
+        .card-browser-section {
+             padding: 20px;  /* Removed to use main-content padding */
+             background-color: var(--color-background-alt); 
+             border-radius: var(--border-radius-md); 
+           box-shadow: var(--shadow-sm); 
+        }
+        .card-browser-filters {
+            display: flex;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: center;
+            padding: 15px;
+            background-color: var(--color-gray-50);
+            border-radius: var(--border-radius-sm);
+            border: 1px solid var(--color-gray-200);
+        }
+        .card-browser-filters input[type="search"],
+        .card-browser-filters select {
+            padding: 10px 12px;
+            border: 1px solid var(--color-gray-300);
+            border-radius: var(--border-radius-sm);
+            color: aliceblue;
+            font-size: 0.9rem;
+            background-color: var(--color-background);
+        }
+        .card-browser-filters input[type="search"] {
+            flex-grow: 1;
+            min-width: 200px; /* Ensure it doesn't get too small */
+        }
+        .card-browser-filters select[multiple] {
+            min-width: 200px; /* Adjust as needed */
+            /* For a better multi-select, a JS library would be used, but this is basic styling */
+             height: auto; /* Or a fixed height like 100px */
+             /* Consider styling options within the select if possible, or replace with a custom component */
+        }
+         .card-browser-actions {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
 
-         .deck-context-menu .delete-option {
-             color: var(--color-danger);
-         }
-          .deck-context-menu .delete-option i {
-             color: var(--color-danger);
-         }
+        .card-results-container {
+            overflow-x: auto; /* Allow horizontal scrolling for the table on small screens */
+        }
 
+        .card-results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            box-shadow: var(--shadow-sm);
+            border-radius: var(--border-radius-sm);
+            overflow: hidden; /* For border-radius to apply to table */
+        }
+        .card-results-table th,
+        .card-results-table td {
+            border: 1px solid var(--color-gray-200);
+            padding: 10px 12px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        .card-results-table th {
+            background-color: var(--color-gray-100);
+            font-weight: 600;
+            color: var(--color-gray-700);
+        }
+        .card-results-table tbody tr:nth-child(even) {
+            background-color: var(--color-gray-50);
+        }
+        .card-results-table tbody tr:hover {
+            background-color: var(--color-primary-light);
+        }
+        .card-results-table td input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        .card-results-table .card-content-cell {
+            max-width: 250px; /* Limit width of content cells */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .card-results-table .card-actions-cell button {
+            margin-right: 5px;
+            padding: 6px 10px;
+            font-size: 0.85rem;
+        }
+        #loading-cards-message,
+        #no-cards-found-message,
+        #card-browser-initial-message {
+            padding: 20px;
+            text-align: center;
+            color: var(--color-gray-600);
+            background-color: var(--color-gray-100);
+            border-radius: var(--border-radius-sm);
+            margin-top: 20px;
+        }
+        #tag-filter-select option {
+            padding: 5px;
+        }
+        .tag-badge {
+            display: inline-block;
+            background-color: var(--color-secondary);
+            color: var(--color-secondary-contrast);
+            padding: 3px 8px;
+            border-radius: var(--border-radius-sm);
+            font-size: 0.75rem;
+            margin-right: 5px;
+            margin-bottom: 3px;
+        }
 
-         /* Make the icon button positioned relative so the menu can be absolute relative to it */
-         .btn.icon-btn.deck-options-btn {
-             position: relative;
-             /* Ensure no default margin/padding interferes */
-             margin: 0;
-             padding: 0 5px; /* Add some horizontal padding */
-             /* Adjust icon size if needed */
-         }
-
-         /* Remove position: relative from deck-card */
-         .deck-card {
-             /* position: relative; -- REMOVED */
-             /* Keep other styles from dashboard.css */
-         }
+     
     </style>
-
-
   </head>
 
   <body>
@@ -107,64 +216,115 @@
         </div>
         <ul class="nav-links">
           <li> <a href="/"> <i class="fas fa-home"></i> <span>Home</span></a> </li>
-          <li class="active"><a href="/dashboard"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
+          <li class="active"><a href="/dashboard"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>
           <li><a href="/study"><i class="fas fa-book-open"></i><span>Study</span></a></li>
           <li><a href="/results"><i class="fas fa-chart-line"></i><span>Results</span></a></li>
           <li><a href="/profile"><i class="fas fa-user"></i><span>Profile</span></a></li>
-          
         </ul>
       </nav>
 
       <main class="main-content">
-        <header class="content-header">
-          <h2>My Decks</h2>
-          <button
-            class="btn primary-btn"
-            onclick="location.href='/create-deck'"
-          >
-            <i class="fas fa-plus"></i> Create New Deck
-          </button>
-        </header>
-
-        <div class="stats-grid">
-          <div class="stat-card fade-in-up">
-            <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
-            <div class="stat-info">
-              <h3>Total Decks</h3>
-              <p>...</p> <!-- JS will populate -->
-            </div>
-          </div>
-          <div class="stat-card fade-in-up delay-100">
-            <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
-            <div class="stat-info">
-              <h3>Cards Mastered</h3>
-              <p>...</p> <!-- JS will populate -->
-            </div>
-          </div>
-          <div class="stat-card fade-in-up delay-200">
-            <div class="stat-icon"><i class="fas fa-clock"></i></div>
-            <div class="stat-info">
-              <h3>Study Time</h3>
-              <p>...</p> <!-- JS will populate -->
-            </div>
-          </div>
-           <!-- Add Study Streak stat card if you have it -->
+        <div class="dashboard-tabs">
+            <button class="tab-button active" data-tab="decks"><i class="fas fa-layer-group"></i> My Decks</button>
+            <button class="tab-button" data-tab="browse"><i class="fas fa-search"></i> Card Browser</button>
         </div>
 
-        <div class="decks-grid">
-          <!-- Deck cards will be populated by JavaScript -->
+        <!-- My Decks Tab Content -->
+        <div id="decks-content" class="tab-content active">
+            <header class="content-header">
+              <h2>My Decks</h2>
+              <button
+                class="btn primary-btn"
+                onclick="location.href='/create-deck'"
+              >
+                <i class="fas fa-plus"></i> Create New Deck
+              </button>
+            </header>
+
+            <div class="stats-grid">
+              <div class="stat-card fade-in-up">
+                <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
+                <div class="stat-info">
+                  <h3>Total Decks</h3>
+                  <p>...</p>
+                </div>
+              </div>
+              <div class="stat-card fade-in-up delay-100">
+                <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-info">
+                  <h3>Cards Mastered</h3>
+                  <p>...</p>
+                </div>
+              </div>
+              <div class="stat-card fade-in-up delay-200">
+                <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                <div class="stat-info">
+                  <h3>Study Time</h3>
+                  <p>...</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="decks-grid">
+              <!-- Deck cards will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Card Browser Tab Content -->
+        <div id="browse-content" class="tab-content card-browser-section">
+            <header class="content-header">
+                <h2>Browse Your Cards</h2>
+            </header>
+                        <div class="card-browser-filters">
+                <input type="search" id="card-search-input" placeholder="Search card content (front, back)..." />
+                <select id="deck-filter-select">
+                     <option value="">All Decks</option>
+                     <!-- Deck options will be populated by JS -->
+                </select>
+                <select id="tag-filter-select" multiple title="Select tags to filter by (Ctrl/Cmd + click for multiple)">
+                    <!-- Tags will be populated by JS -->
+                </select>
+                <button id="apply-card-filter-btn" class="btn primary-btn">
+                    <i class="fas fa-search"></i> Search
+                </button>
+                <!-- ADD THIS BUTTON -->
+                <button id="clear-card-filter-btn" class="btn tertiary-btn" title="Clear all filters">
+                    <i class="fas fa-times-circle"></i> Clear
+                </button>
+            </div>
+
+            <div class="card-browser-actions">
+                <button id="create-custom-deck-btn" class="btn secondary-btn" disabled>
+                    <i class="fas fa-plus-circle"></i> Create Deck from Selected
+                </button>
+                <!-- Future: <button id="create-filtered-deck-btn" class="btn secondary-btn"><i class="fas fa-filter"></i> Create Filtered Deck</button> -->
+            </div>
+
+            <div id="card-results-container">
+                <div id="loading-cards-message" style="display:none;">
+                    <i class="fas fa-spinner fa-spin"></i> Loading cards...
+                </div>
+                <table class="card-results-table" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="select-all-cards-checkbox" title="Select all/none"></th>
+                            <th>Front</th>
+                            <th>Back</th>
+                            <th>Deck</th>
+                            <th>Tags</th>
+                            <!-- <th>Actions</th> --> <!-- Add actions like edit/delete note later -->
+                        </tr>
+                    </thead>
+                    <tbody id="card-results-tbody">
+                        <!-- Card rows will be populated by JS -->
+                    </tbody>
+                </table>
+                <p id="no-cards-found-message" style="display:none;">No cards found matching your criteria.</p>
+                <p id="card-browser-initial-message">Use the filters above to search for your cards.</p>
+            </div>
         </div>
       </main>
     </div>
-
-    <!-- The context menu structure (hidden by default) -->
-    <!-- We will create this dynamically in JS instead for better control -->
-    <!-- <ul class="deck-context-menu" style="display: none;">
-        <li><button class="menu-option" data-action="study">Study Deck</button></li>
-        <li><button class="menu-option" data-action="edit">Edit Deck</button></li>
-        <li><button class="menu-option delete-option" data-action="delete">Delete Deck</button></li>
-    </ul> -->
-
 
     <script src="{{url_for('static', filename='js/dashboard.js')}}"></script>
   </body>

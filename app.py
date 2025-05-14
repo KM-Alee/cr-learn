@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
+import traceback
 import os
 import config
 from functools import wraps
@@ -56,6 +57,154 @@ def auth():
 def dashboard():
     return render_template('dashboard.html')
 
+@app.route('/api/tags', methods=['GET'])
+@login_required
+def api_get_tags():
+    user_id = session['user_id']
+    cur = mysql.connection.cursor()
+    try:
+        # Fetches all unique tag names associated with the current user's notes OR decks
+        cur.execute("""
+            SELECT DISTINCT t.id, t.name 
+            FROM tags t
+            INNER JOIN note_tags nt ON t.id = nt.tag_id
+            INNER JOIN notes n ON nt.note_id = n.id
+            WHERE n.user_id = %s
+            UNION
+            SELECT DISTINCT t.id, t.name
+            FROM tags t
+            INNER JOIN deck_tags dt ON t.id = dt.tag_id
+            INNER JOIN decks d ON dt.deck_id = d.id
+            WHERE d.user_id = %s
+            ORDER BY name ASC
+        """, (user_id, user_id))
+        tags = cur.fetchall()
+        if not tags: # If no tags are found for the user from notes or decks
+            # Optionally, fetch all global tags if you want a general list
+            # cur.execute("SELECT id, name FROM tags ORDER BY name ASC")
+            # tags = cur.fetchall()
+            # For now, just return empty if user has no tagged items
+            pass
+        return jsonify(success=True, tags=tags)
+    except Exception as e:
+        print(f"Error fetching tags for user {user_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
+    finally:
+        cur.close()
+
+@app.route('/api/cards/search', methods=['GET'])
+@login_required
+def api_search_cards():
+    user_id = session['user_id']
+    search_query_term = request.args.get('query', '').strip()
+    tag_ids_str = request.args.get('tags', '') 
+    # === NEW: Optional deck_id filter ===
+    deck_id_str = request.args.get('deck_id', '').strip() 
+
+    cur = mysql.connection.cursor()
+    try:
+        sql_query_base = """
+            SELECT 
+                n.id as note_id, 
+                f.id as flashcard_id,
+                n.field_values, 
+                d.name as deck_name,
+                d.id as deck_id,
+                f.card_type,
+                f.due_date,
+                (SELECT GROUP_CONCAT(DISTINCT t_sub.name SEPARATOR ', ') 
+                 FROM tags t_sub
+                 JOIN note_tags nt_sub ON t_sub.id = nt_sub.tag_id
+                 WHERE nt_sub.note_id = n.id) as note_tags 
+            FROM notes n
+            JOIN flashcards f ON n.id = f.note_id  
+            JOIN decks d ON f.deck_id = d.id
+            WHERE n.user_id = %s 
+        """
+        params = [user_id]
+        conditions = [] 
+
+        # Add search term condition
+        if search_query_term:
+            conditions.append("(n.field_values LIKE %s)")
+            params.append(f"%{search_query_term}%")
+
+        # Add tag filtering condition (matching ANY of the selected tags)
+        tag_ids = []
+        if tag_ids_str:
+            try:
+                tag_ids = [int(tid) for tid in tag_ids_str.split(',') if tid.strip()]
+            except ValueError:
+                return jsonify(success=False, errors={'tags': 'Invalid tag ID format.'}), 400
+            
+            if tag_ids:
+                placeholders = ','.join(['%s'] * len(tag_ids))
+                conditions.append(f"n.id IN (SELECT nt_sub.note_id FROM note_tags nt_sub WHERE nt_sub.tag_id IN ({placeholders}))")
+                params.extend(tag_ids)
+
+        # === NEW: Add deck filtering condition ===
+        deck_ids = [] # Allow multiple decks if frontend supports multi-select
+        if deck_id_str:
+             try:
+                 # Assuming deck_id can be a single ID or comma-separated list of IDs
+                 deck_ids = [int(did) for did in deck_id_str.split(',') if did.strip()]
+             except ValueError:
+                 return jsonify(success=False, errors={'deck_id': 'Invalid deck ID format.'}), 400
+
+             if deck_ids: # Only add condition if valid deck IDs are provided
+                 deck_placeholders = ','.join(['%s'] * len(deck_ids))
+                 conditions.append(f"d.id IN ({deck_placeholders})")
+                 params.extend(deck_ids)
+
+
+        # Combine conditions with AND
+        if conditions:
+            sql_query = sql_query_base + " AND " + " AND ".join(conditions)
+        else:
+            sql_query = sql_query_base # No extra conditions, select all user cards
+
+        # Add grouping and ordering
+        sql_query += """
+            GROUP BY n.id, f.id, d.name, d.id, f.card_type, f.due_date 
+            ORDER BY n.created_at DESC
+            LIMIT 200 -- Basic limit, consider pagination
+        """ 
+
+        print(f"Executing search query for user {user_id}: {sql_query}") 
+        print(f"Query parameters: {params}") 
+
+        cur.execute(sql_query, tuple(params))
+        cards_raw = cur.fetchall()
+
+        results = []
+        for card_raw in cards_raw:
+            card_data = dict(card_raw)
+            field_values = parse_field_values(card_data.get('field_values'))
+            results.append({
+                'note_id': card_data['note_id'],
+                'flashcard_id': card_data['flashcard_id'],
+                'front': field_values.get('Front', 'N/A'),
+                'back': field_values.get('Back', 'N/A'),
+                'deck_name': card_data['deck_name'],
+                'deck_id': card_data['deck_id'],
+                'card_type': card_data['card_type'],
+                'due_date': card_data['due_date'].strftime('%Y-%m-%d') if card_data['due_date'] else 'N/A',
+                'tags': card_data.get('note_tags') if card_data.get('note_tags') else ''
+            })
+        
+        return jsonify(success=True, cards=results)
+
+    except Exception as e:
+        print(f"Error searching cards for user {user_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
+    finally:
+        cur.close()
+
+
 @app.route('/api/decks/<int:deck_id>', methods=['DELETE'])
 @login_required
 def api_delete_deck(deck_id):
@@ -104,51 +253,40 @@ def api_get_dashboard_stats():
         total_decks = total_decks_data['total_decks'] if total_decks_data else 0
 
         # 2. Total Cards Learned/Mastered
-        # Definition of "mastered" can vary. Let's use a simple definition:
-        # cards with ease_factor >= 2.5 and reps >= 3 (example criteria)
-        # Or simpler: cards that have been reviewed successfully a few times (e.g., reps > 5)
-        # Let's use a simple count of cards with reps > 0 for now (cards that have been seen at least once)
-        # A better definition would involve a threshold on ease factor or number of reviews after graduating.
-        # Let's use ease_factor >= 3.0 as a potential indicator of 'mastered' for now.
+        # Definition: card_type = 'review' AND ease_factor >= 2.8
+        # This counts distinct flashcards that meet the mastery criteria.
         cur.execute("""
-            SELECT COUNT(DISTINCT f.id) as cards_mastered -- Count unique flashcards
+            SELECT COUNT(DISTINCT f.id) as cards_mastered
             FROM flashcards f
             JOIN notes n ON f.note_id = n.id
-            WHERE n.user_id = %s AND f.ease_factor >= 3.0 -- Example criteria
+            WHERE n.user_id = %s AND f.card_type = 'review' AND f.ease_factor >= 2.8
         """, (user_id,))
         cards_mastered_data = cur.fetchone()
         cards_mastered = cards_mastered_data['cards_mastered'] if cards_mastered_data else 0
 
         # 3. Total Study Time
-        # Assuming total_time_spent_seconds is tracked in user_stats or review_sessions
-        # We can aggregate from review_sessions if available, or rely on user_stats
+        # This relies on 'review_sessions' table being populated correctly with 'time_spent_seconds'.
+        # If 'time_spent_seconds' is not reliably populated, this will be inaccurate.
         cur.execute("""
             SELECT SUM(time_spent_seconds) as total_time_seconds
             FROM review_sessions
-            WHERE user_id = %s AND session_end IS NOT NULL
+            WHERE user_id = %s AND session_end IS NOT NULL AND time_spent_seconds IS NOT NULL
         """, (user_id,))
         study_time_data = cur.fetchone()
         total_time_seconds = study_time_data['total_time_seconds'] if study_time_data and study_time_data['total_time_seconds'] is not None else 0
 
-        # Convert seconds to a human-readable format (e.g., hours, minutes)
-        total_time_hours = round(total_time_seconds / 3600, 1) # Round to 1 decimal place
+        total_time_hours = round(total_time_seconds / 3600, 1)
 
-        # 4. Review Streak (More complex - requires daily review tracking)
-        # The user_stats table has review_streak_days, current_streak_start, last_reviewed_date
-        # This requires logic during review submission (api_submit_review) to update the streak.
-        # For now, fetch the raw streak value from user_stats.
+        # 4. Review Streak
         cur.execute("SELECT review_streak_days FROM user_stats WHERE user_id = %s", (user_id,))
         streak_data = cur.fetchone()
         review_streak_days = streak_data['review_streak_days'] if streak_data and streak_data['review_streak_days'] is not None else 0
         
-        # If user_stats doesn't exist, review_streak_days will be 0, which is correct.
-
-
         dashboard_stats = {
             'total_decks': total_decks,
             'cards_mastered': cards_mastered,
-            'total_study_time_seconds': total_time_seconds, # Raw value
-            'total_study_time_formatted': f"{total_time_hours}h", # Formatted value for display
+            'total_study_time_seconds': total_time_seconds,
+            'total_study_time_formatted': f"{total_time_hours}h",
             'review_streak_days': review_streak_days
         }
 
@@ -340,13 +478,128 @@ def edit_deck_page(deck_id):
         
     return render_template('edit-deck.html', deck_id=deck_id)
 
+
 def parse_field_values(field_values_json):
     try:
-        return json.loads(field_values_json)
-    except (json.JSONDecodeError, TypeError):
-        # Handle cases where it might not be valid JSON or is None
-        # Return a default structure or None based on expected usage
-        return {'Front': 'Error: Invalid data', 'Back': ''} 
+        if isinstance(field_values_json, str):
+            # Attempt to load JSON, being mindful of potential double-escaped strings
+            # This can happen if JSON is stringified multiple times.
+            try:
+                return json.loads(field_values_json)
+            except json.JSONDecodeError:
+                # If direct loading fails, try un-escaping if it looks like an escaped JSON string
+                # e.g. "\"{\\\"Front\\\": \\\"Test\\\"}\""
+                if field_values_json.startswith('"') and field_values_json.endswith('"'):
+                    try:
+                        return json.loads(json.loads(field_values_json)) # Try double-decode
+                    except: # Fallback if double-decode also fails
+                        pass
+                # If it's not JSON or malformed, return a default
+                return {'Front': 'Error: Malformed data', 'Back': ''}
+        elif isinstance(field_values_json, dict):
+            return field_values_json # Already a dict
+        return {'Front': 'Error: Invalid data format', 'Back': ''} # Default for other unexpected types
+    except (json.JSONDecodeError, TypeError) as e:
+        print(f"Error parsing field_values: {field_values_json}, Error: {e}")
+        return {'Front': 'Error loading content', 'Back': ''}
+
+
+
+@app.route('/api/decks/create-custom', methods=['POST'])
+@login_required
+def api_create_custom_deck():
+    user_id = session['user_id']
+    data = request.get_json()
+
+    if not data:
+        return jsonify(success=False, errors={'general': 'Invalid request format, JSON expected'}), 400
+
+    deck_name = data.get('name')
+    note_ids = data.get('note_ids') # Expected to be a list of integers
+
+    if not deck_name or not deck_name.strip():
+        return jsonify(success=False, errors={'name': 'Deck name is required'}), 400
+    
+    if not note_ids or not isinstance(note_ids, list) or not all(isinstance(nid, int) for nid in note_ids):
+        return jsonify(success=False, errors={'note_ids': 'A valid list of note IDs is required'}), 400
+    
+    if not note_ids: # Check if the list is empty after validation
+        return jsonify(success=False, errors={'note_ids': 'At least one card (note) must be selected'}), 400
+
+    cur = mysql.connection.cursor()
+    try:
+        # 1. Create the new deck
+        cur.execute(
+            "INSERT INTO decks (user_id, name, description) VALUES (%s, %s, %s)",
+            (user_id, deck_name.strip(), "Custom deck created from card browser.") # Default description
+        )
+        new_deck_id = cur.lastrowid
+
+        # 2. For each selected note, create a new flashcard in the new deck
+        # We'll copy the note reference but treat the card as 'new' in this custom deck.
+        # This assumes one primary flashcard type per note for simplicity when copying.
+        # If a note can generate multiple types of flashcards, this logic might need adjustment
+        # to decide which template/card_type to use for the new flashcard or if all should be copied.
+
+        flashcards_created_count = 0
+        for note_id in note_ids:
+            # Verify the note belongs to the user (important!)
+            cur.execute("SELECT id FROM notes WHERE id = %s AND user_id = %s", (note_id, user_id))
+            note = cur.fetchone()
+            if not note:
+                print(f"Skipping note_id {note_id} as it doesn't belong to user {user_id} or doesn't exist.")
+                continue # Skip if note not found or not owned
+
+            # Insert a new flashcard for this note into the new deck.
+            # It will be a 'new' card, ready for learning in this specific deck context.
+            # Default values for a new card:
+            cur.execute(
+                """
+                INSERT INTO flashcards (note_id, deck_id, card_type, due_date, ease_factor, reps, intervals, last_reviewed)
+                VALUES (%s, %s, 'new', CURDATE(), 2.5, 0, 0, NULL) 
+                """,
+                (note_id, new_deck_id)
+            )
+            if cur.rowcount > 0:
+                flashcards_created_count += 1
+        
+        if flashcards_created_count == 0 and len(note_ids) > 0:
+            # This case might happen if all note_ids were invalid/not owned.
+            # Rollback deck creation if no cards were actually added.
+            mysql.connection.rollback()
+            return jsonify(success=False, errors={'note_ids': 'No valid cards could be added to the new deck.'}), 400
+
+        mysql.connection.commit()
+
+        # Fetch the newly created deck's details to return
+        cur.execute("""
+            SELECT d.id, d.name, d.description, d.created_at, 
+                   (SELECT COUNT(*) FROM flashcards f WHERE f.deck_id = d.id) as card_count,
+                   GROUP_CONCAT(DISTINCT t.name SEPARATOR ', ') as tags
+            FROM decks d
+            LEFT JOIN deck_tags dt ON d.id = dt.deck_id
+            LEFT JOIN tags t ON dt.tag_id = t.id
+            WHERE d.id = %s
+            GROUP BY d.id
+        """, (new_deck_id,))
+        new_deck_data = cur.fetchone()
+        
+        # Calculate mastered percentage for the new deck (will be 0 initially for new cards)
+        if new_deck_data:
+            new_deck_data = dict(new_deck_data) # Make it mutable
+            new_deck_data['mastered_percentage'] = 0 
+
+
+        return jsonify(success=True, message=f'Deck "{deck_name}" created with {flashcards_created_count} cards.', deck=new_deck_data), 201
+
+    except Exception as e:
+        mysql.connection.rollback()
+        print(f"Error creating custom deck: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
+    finally:
+        cur.close()
 
 @app.route('/api/decks/<int:deck_id>/cards', methods=['GET'])
 @login_required
@@ -859,7 +1112,6 @@ def show_env():
         "DB_NAME": os.getenv("DB_NAME"),
         "DB_HOST": os.getenv("DB_HOST"),
     }
-
 @app.route('/api/decks', methods=['POST'])
 @login_required
 def api_create_deck():
@@ -869,79 +1121,130 @@ def api_create_deck():
 
     deck_name = data.get('name')
     description = data.get('description', '')
-    tags_str = data.get('tags', []) # Expecting a list of strings now from JS
-    cards_data = data.get('cards', []) # Expecting a list of card objects [{front: '', back: ''}, ...]
+    tags_str = data.get('tags', []) # Expecting a list of strings
+    cards_data = data.get('cards', []) # Expecting a list of card objects
 
-    if not deck_name:
+    if not deck_name or not deck_name.strip():
         return jsonify(success=False, errors={'name': 'Deck name is required'}), 400
+    deck_name = deck_name.strip()
 
     user_id = session['user_id']
     cur = mysql.connection.cursor()
+    deck_id = None
+    tag_ids_for_notes = [] # List to store tag IDs to link to notes
 
     try:
-        # Insert into decks table
+        # 1. Insert into decks table
         cur.execute(
             "INSERT INTO decks (user_id, name, description) VALUES (%s, %s, %s)",
             (user_id, deck_name, description)
         )
         deck_id = cur.lastrowid
+        if not deck_id:
+             # This is a critical failure, should ideally not happen with auto-increment
+             mysql.connection.rollback()
+             return jsonify(success=False, errors={'general': 'Failed to create deck entry.'}), 500
 
-        # Handle tags
-        if tags_str: # tags_str is now expected to be a list
+
+        # 2. Handle tags (find/create tags and link to the deck, and collect IDs for notes)
+        if tags_str:
             tag_names = [tag.strip() for tag in tags_str if isinstance(tag, str) and tag.strip()]
             for tag_name in tag_names:
                 cur.execute("SELECT id FROM tags WHERE name = %s", (tag_name,))
                 tag_result = cur.fetchone()
+                tag_id = None # Initialize for this tag
+
                 if tag_result:
                     tag_id = tag_result['id']
                 else:
-                    cur.execute("INSERT INTO tags (name) VALUES (%s)", (tag_name,))
-                    tag_id = cur.lastrowid
-                
-                cur.execute(
-                    "INSERT INTO deck_tags (deck_id, tag_id) VALUES (%s, %s)",
-                    (deck_id, tag_id)
-                )
-        
-        # Handle cards
-        # For simplicity, we'll use a default note_type_id. 
-        # You might want to create a 'Basic' note type in your note_types table.
-        # Let's assume note_type_id = 1 is a 'Basic (Front/Back)' type.
-        default_note_type_id = 1 # IMPORTANT: Ensure this note_type exists or handle dynamically
-        
-        # Create a basic note type if it doesn't exist (for testing/simplicity)
+                    # Create the tag if it doesn't exist
+                    try:
+                        cur.execute("INSERT INTO tags (name) VALUES (%s)", (tag_name,))
+                        tag_id = cur.lastrowid
+                        if not tag_id:
+                             # Could happen if INSERT IGNORE was used and ignored, or auto-increment issue
+                             print(f"WARNING: Failed to get lastrowid for new tag '{tag_name}'")
+                             continue # Skip linking this tag if ID wasn't generated
+                    except Exception as e_insert:
+                         print(f"Error inserting tag '{tag_name}': {e_insert}")
+                         # Decide how to handle insert errors - continue or rollback?
+                         # For now, continue but don't get an ID if insert failed
+                         continue # Skip linking this tag if insert failed
+
+                # If we have a valid tag_id (either found or created)
+                if tag_id:
+                    # Link tag to the deck
+                    try:
+                         cur.execute(
+                            "INSERT INTO deck_tags (deck_id, tag_id) VALUES (%s, %s)",
+                            (deck_id, tag_id)
+                         )
+                    except Exception as e_deck_tag:
+                         print(f"Error linking deck {deck_id} to tag {tag_id}: {e_deck_tag}")
+                         # Continue, but this link is missed
+
+                    # === NEW: Store tag_id to link to notes later ===
+                    tag_ids_for_notes.append(tag_id)
+
+        # 3. Handle cards (create notes and flashcards)
+        # Assume default note_type_id = 1 (Basic)
+        default_note_type_id = 1 
         cur.execute("SELECT id FROM note_types WHERE id = %s", (default_note_type_id,))
         if not cur.fetchone():
-            # This is a simplified way. In a real app, you'd manage note types more robustly.
-            cur.execute(
+             # Create a basic note type if it doesn't exist
+             cur.execute(
                 "INSERT IGNORE INTO note_types (id, name, fields, templates) VALUES (%s, %s, %s, %s)",
                 (default_note_type_id, 'Basic', '["Front", "Back"]', '{"Default Card": {"front_template": "{{Front}}", "back_template": "{{Back}}"}}')
             )
 
-
+        flashcards_created_count = 0
         for card_item in cards_data:
             front_text = card_item.get('front')
             back_text = card_item.get('back')
 
             if not front_text or not back_text:
-                # Optionally skip incomplete cards or return an error
+                # Skip incomplete cards
                 continue 
 
-            # Store front/back as JSON in field_values
-            # Matches the assumption of fields: '["Front", "Back"]' for the basic note type
             field_values_json = json.dumps({'Front': front_text, 'Back': back_text})
 
+            # Insert note
             cur.execute(
-                """
-                INSERT INTO notes (user_id, note_type_id, field_values) 
-                VALUES (%s, %s, %s)
-                """,
+                "INSERT INTO notes (user_id, note_type_id, field_values) VALUES (%s, %s, %s)",
                 (user_id, default_note_type_id, field_values_json)
             )
             note_id = cur.lastrowid
+            if not note_id:
+                 print(f"CRITICAL: Failed to get note_id after inserting note. Rolling back.")
+                 mysql.connection.rollback()
+                 return jsonify(success=False, errors={'general': 'Failed to create note for a card.'}), 500
 
-            # Create a flashcard for this note in the current deck
-            # Set initial due_date to today (or NULL for new cards to be picked up by study query)
+
+            # === NEW: Link tags (collected from deck level) to this note ===
+            if tag_ids_for_notes:
+                 # Construct a single query for batch insert into note_tags
+                 note_tag_values = [(note_id, tag_id) for tag_id in tag_ids_for_notes]
+                 # Ensure there are values to insert
+                 if note_tag_values:
+                     # MySQLdb execute can often take a list of tuples for bulk inserts
+                     # The SQL syntax is INSERT INTO ... VALUES (%s, %s), (%s, %s), ...
+                     # But the standard execute method handles this by repeating the (%s, %s) tuple
+                     # for each item in the list of tuples and flatting the params.
+                     # Alternatively, build the query string manually for robustness/clarity:
+                     placeholders = ', '.join(['(%s, %s)'] * len(note_tag_values))
+                     flat_values = [item for sublist in note_tag_values for item in sublist] # Flatten list of tuples
+                     
+                     try:
+                         cur.execute(
+                            f"INSERT INTO note_tags (note_id, tag_id) VALUES {placeholders}",
+                            tuple(flat_values)
+                         )
+                         # print(f"Inserted {cur.rowcount} entries into note_tags for note {note_id}") # Debug
+                     except Exception as e_note_tag:
+                         print(f"Error linking note {note_id} to tags {tag_ids_for_notes}: {e_note_tag}")
+                         # Continue creating other cards, just miss the tags for this note.
+
+            # Insert flashcard for this note in the current deck
             cur.execute(
                 """
                 INSERT INTO flashcards (note_id, deck_id, card_type, due_date, ease_factor, reps, intervals)
@@ -949,30 +1252,60 @@ def api_create_deck():
                 """,
                 (note_id, deck_id)
             )
+            flashcard_id = cur.lastrowid
+            if not flashcard_id:
+                 print(f"CRITICAL: Failed to get flashcard_id for note {note_id}. Rolling back.")
+                 mysql.connection.rollback()
+                 return jsonify(success=False, errors={'general': 'Failed to create flashcard entry.'}), 500
+            flashcards_created_count += 1
 
+
+        # 4. Commit the transaction
         mysql.connection.commit()
-        
+
+        # 5. Fetch the newly created deck's details to return (including aggregated tags from deck_tags)
         cur.execute("""
             SELECT d.id, d.name, d.description, d.created_at, 
                    (SELECT COUNT(*) FROM flashcards f WHERE f.deck_id = d.id) as card_count,
-                   GROUP_CONCAT(DISTINCT t.name SEPARATOR ', ') as tags
+                   GROUP_CONCAT(DISTINCT t.name SEPARATOR ', ') as tags_on_deck -- Fetch tags linked to the deck
             FROM decks d
             LEFT JOIN deck_tags dt ON d.id = dt.deck_id
             LEFT JOIN tags t ON dt.tag_id = t.id
-            WHERE d.id = %s
+            WHERE d.id = %s AND d.user_id = %s
             GROUP BY d.id
-        """, (deck_id,))
-        new_deck_data = cur.fetchone()
+        """, (deck_id, user_id)) 
+        new_deck_data_row = cur.fetchone()
 
-        return jsonify(success=True, message='Deck and cards created successfully', deck=new_deck_data), 201
+        if new_deck_data_row:
+            new_deck_data = dict(new_deck_data_row)
+            new_deck_data['mastered_percentage'] = 0 # Default for new decks
+            # The 'tags' key in the response payload will now contain tags from deck_tags
+            new_deck_data['tags'] = new_deck_data.pop('tags_on_deck', None) # Rename the column back to 'tags' for frontend consistency
+        else:
+            # This case indicates a problem fetching data *after* commit, but creation succeeded
+            print(f"ERROR: Could not fetch newly created deck data (ID: {deck_id}) after commit.")
+            # Return a minimal success response
+            return jsonify(success=True, message=f'Deck "{deck_name}" created successfully, but failed to fetch details. Deck ID: {deck_id}'), 201
+
+
+        return jsonify(success=True, message=f'Deck "{deck_name}" and {flashcards_created_count} card(s) created successfully.', deck=new_deck_data), 201
 
     except Exception as e:
-        mysql.connection.rollback()
-        print(f"Error creating deck/cards: {e}")
-        # Be careful about exposing too much detail in error messages to the client
+        # Catch any exception during the process and rollback
+        print(f"Exception occurred during deck creation for user {user_id}: {e}")
+        traceback.print_exc() # Print full traceback
+        if mysql.connection: # Check if connection is still valid before trying rollback
+             mysql.connection.rollback()
+             print("Transaction rolled back.")
+        else:
+             print("No active MySQL connection to rollback.")
+
         return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
     finally:
-        cur.close()
+        if cur:
+            cur.close()
+            # print("Database cursor closed.") # Optional debug log
+
 
 @app.route('/api/decks', methods=['GET'])
 @login_required
@@ -980,6 +1313,7 @@ def api_get_decks():
     user_id = session['user_id']
     cur = mysql.connection.cursor()
     try:
+        # Fetch decks along with total card count and mastered card count for each deck
         cur.execute("""
             SELECT 
                 d.id, 
@@ -987,9 +1321,11 @@ def api_get_decks():
                 d.description, 
                 d.created_at,
                 (SELECT COUNT(*) FROM flashcards f WHERE f.deck_id = d.id) as card_count,
+                (SELECT COUNT(*) 
+                    FROM flashcards sf 
+                    WHERE sf.deck_id = d.id AND sf.card_type = 'review' AND sf.ease_factor >= 2.8
+                ) as mastered_cards_in_deck, -- Count of mastered cards in this specific deck
                 GROUP_CONCAT(DISTINCT t.name SEPARATOR ', ') as tags
-                -- Add more fields for progress later, e.g.,
-                -- (SELECT COUNT(*) FROM flashcards f WHERE f.deck_id = d.id AND f.ease_factor > 3.0) as mastered_cards
             FROM decks d
             LEFT JOIN deck_tags dt ON d.id = dt.deck_id
             LEFT JOIN tags t ON dt.tag_id = t.id
@@ -998,32 +1334,33 @@ def api_get_decks():
             ORDER BY d.created_at DESC
         """, (user_id,))
         
-        decks = cur.fetchall()
-        
+        decks_raw = cur.fetchall()
         
         decks_with_progress = []
-        for deck in decks:
-            deck_data = dict(deck) # Convert from DictRow to a mutable dict
-            # Placeholder for mastered percentage
-            # In a real scenario, calculate this based on flashcard status
-            if deck_data['card_count'] > 0:
-                 # Example: Fetch actual mastered cards
-                # cur.execute("SELECT COUNT(*) as mastered FROM flashcards WHERE deck_id = %s AND ease_factor >= %s", (deck_data['id'], 2.5)) # Example threshold
-                # mastered_info = cur.fetchone()
-                # deck_data['mastered_percentage'] = (mastered_info['mastered'] / deck_data['card_count']) * 100 if mastered_info else 0
-                deck_data['mastered_percentage'] = 0 # Placeholder
+        for deck_row in decks_raw:
+            deck_data = dict(deck_row) # Convert from DictRow to a mutable dict
+            
+            card_count = deck_data.get('card_count', 0)
+            mastered_count = deck_data.get('mastered_cards_in_deck', 0)
+
+            if card_count > 0:
+                deck_data['mastered_percentage'] = round((mastered_count / card_count) * 100, 0)
             else:
                 deck_data['mastered_percentage'] = 0
+            
+            # No need to delete 'mastered_cards_in_deck' as it's not sent to frontend by default if not accessed
             decks_with_progress.append(deck_data)
 
         return jsonify(success=True, decks=decks_with_progress)
 
     except Exception as e:
         print(f"Error fetching decks: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
     finally:
         cur.close()
-
+        
 def parse_field_values(field_values_json):
     try:
         # Assumes field_values_json is a JSON string like '{"Front": "...", "Back": "..."}'
@@ -1330,6 +1667,8 @@ def api_submit_review(flashcard_id):
         return jsonify(success=False, errors={'general': f'An error occurred: {str(e)}'}), 500
     finally:
         cur.close()
+
+
 
 # Add this route in app.py
 @app.route('/api/decks/<int:deck_id>', methods=['GET'])
