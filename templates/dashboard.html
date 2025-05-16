@@ -7,6 +7,7 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+    <!-- Ensure these paths are correct for your Flask static files -->
     <link rel="stylesheet" href="{{url_for('static', filename='css/global.css')}}" />
     <link rel="stylesheet" href="{{url_for('static', filename='css/dashboard.css')}}" />
     <link rel="stylesheet" href="{{url_for('static', filename='css/animation.css')}}" />
@@ -14,25 +15,49 @@
 
     <style>
         /* Styles for Deck Context Menu */
+        .deck-card.fade-out {
+          animation: fadeOutAndShrink 0.5s forwards;
+        }
+
+        @keyframes fadeOutAndShrink {
+          from {
+            opacity: 1; /* Start from full opacity for a smoother visual */
+            transform: scale(1) translateY(0);
+          }
+          to {
+            opacity: 0;
+            transform: scale(0.8) translateY(-20px);
+            height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            margin-top: 0;
+            margin-bottom: 0;
+            border: none;
+            overflow: hidden;
+          }
+        }
+        .deck-options-button-wrapper { /* Added a wrapper for positioning context menu */
+            position: relative;
+        }
         .deck-context-menu {
             position: absolute;
-            top: 100%;
+            top: calc(100% + 5px); /* Position below the button */
             right: 0;
             background-color: var(--color-background);
             border: 1px solid var(--color-gray-300);
             border-radius: var(--border-radius-sm);
             box-shadow: var(--shadow-md);
-            z-index: 10;
+            z-index: 1000; /* Ensure it's on top */
             list-style: none;
             padding: 5px 0;
             margin: 0;
-            min-width: 150px;
+            min-width: 160px; /* Slightly wider for better text fit */
             opacity: 0;
             visibility: hidden;
             transform: translateY(10px);
             transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
         }
-        .deck-options-btn.menu-open .deck-context-menu {
+        .deck-options-button-wrapper.menu-open .deck-context-menu { /* Target wrapper for menu-open */
              opacity: 1;
              visibility: visible;
              transform: translateY(0);
@@ -55,9 +80,22 @@
         .deck-context-menu button:hover { background-color: var(--color-gray-200); }
         .deck-context-menu .delete-option { color: var(--color-danger); }
         .deck-context-menu .delete-option i { color: var(--color-danger); }
-        .btn.icon-btn.deck-options-btn { position: relative; margin: 0; padding: 0 5px; }
+        /* .btn.icon-btn.deck-options-btn { position: relative; margin: 0; padding: 0 5px; } */
+        /* Adjusted this to be less specific if global.css has .btn styling */
+        .deck-options-btn {
+            background: none;
+            border: none;
+            color: var(--color-gray-600);
+            cursor: pointer;
+            padding: 5px;
+            margin:0; /* Reset margin if it's part of a group */
+        }
+        .deck-options-btn:hover {
+            color: var(--color-primary);
+        }
 
-        /* Styles for Dashboard Tabs */
+
+        /* Styles for Tabs */
         .dashboard-tabs {
             display: flex;
             margin-bottom: 20px;
@@ -68,12 +106,12 @@
             cursor: pointer;
             border: none;
             background-color: transparent;
-            font-size: 1rem; /* var(--font-size-md) or similar */
+            font-size: 1rem;
             color: var(--color-gray-700);
             border-bottom: 3px solid transparent;
             margin-right: 10px;
             transition: color 0.2s ease, border-bottom-color 0.2s ease;
-            margin-bottom: -1px; /* Align with the bottom border of .dashboard-tabs */
+            margin-bottom: -1px;
         }
         .tab-button:hover {
             color: var(--color-primary-dark);
@@ -85,7 +123,7 @@
         }
         .tab-content {
             display: none;
-            animation: fadeIn 0.5s ease-out; /* Simple fade-in for tab content */
+            animation: fadeIn 0.5s ease-out; /* Ensure fadeIn animation is defined in animation.css */
         }
         .tab-content.active {
             display: block;
@@ -93,40 +131,41 @@
 
         /* Styles for Card Browser */
         .card-browser-section {
-             padding: 20px;  /* Removed to use main-content padding */
-             background-color: var(--color-background-alt); 
-             border-radius: var(--border-radius-md); 
-           box-shadow: var(--shadow-sm); 
+             background-color: var(--color-gray-100); /* Lighter background for the section */
+             border-radius: var(--border-radius-md);
+             box-shadow: var(--shadow-sm);
+             padding: 20px; /* Added padding to the section itself */
         }
         .card-browser-filters {
             display: flex;
-            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            flex-wrap: wrap;
             gap: 15px;
             margin-bottom: 20px;
             align-items: center;
             padding: 15px;
-            background-color: var(--color-gray-50);
+            background-color: var(--color-gray-200); /* Filter bar background */
             border-radius: var(--border-radius-sm);
-            border: 1px solid var(--color-gray-200);
+            border: 1px solid var(--color-gray-300);
         }
         .card-browser-filters input[type="search"],
         .card-browser-filters select {
             padding: 10px 12px;
-            border: 1px solid var(--color-gray-300);
+            border: 1px solid var(--color-gray-400);
             border-radius: var(--border-radius-sm);
-            color: aliceblue;
+            color: var(--color-foreground);
             font-size: 0.9rem;
-            background-color: var(--color-background);
+            background-color: var(--color-background); /* Use main background for inputs */
+        }
+         .card-browser-filters input[type="search"]::placeholder {
+            color: var(--color-gray-500);
         }
         .card-browser-filters input[type="search"] {
             flex-grow: 1;
-            min-width: 200px; /* Ensure it doesn't get too small */
+            min-width: 200px;
         }
         .card-browser-filters select[multiple] {
-            min-width: 200px; /* Adjust as needed */
-            /* For a better multi-select, a JS library would be used, but this is basic styling */
-             height: auto; /* Or a fixed height like 100px */
-             /* Consider styling options within the select if possible, or replace with a custom component */
+            min-width: 200px;
+             height: auto; /* Or a fixed height like 100px if preferred */
         }
          .card-browser-actions {
             margin-bottom: 20px;
@@ -135,7 +174,7 @@
         }
 
         .card-results-container {
-            overflow-x: auto; /* Allow horizontal scrolling for the table on small screens */
+            overflow-x: auto;
         }
 
         .card-results-table {
@@ -145,37 +184,42 @@
             font-size: 0.9rem;
             box-shadow: var(--shadow-sm);
             border-radius: var(--border-radius-sm);
-            overflow: hidden; /* For border-radius to apply to table */
+            overflow: hidden;
         }
         .card-results-table th,
         .card-results-table td {
-            border: 1px solid var(--color-gray-200);
+            border: 1px solid var(--color-gray-300);
             padding: 10px 12px;
             text-align: left;
             vertical-align: middle;
         }
         .card-results-table th {
-            background-color: var(--color-gray-100);
+            background-color: var(--color-gray-200);
             font-weight: 600;
             color: var(--color-gray-700);
         }
         .card-results-table tbody tr:nth-child(even) {
-            background-color: var(--color-gray-50);
+            background-color: var(--color-gray-100); /* Lighter for even rows */
+        }
+         .card-results-table tbody tr:nth-child(odd) {
+            background-color: var(--color-background); /* Main background for odd rows */
         }
         .card-results-table tbody tr:hover {
             background-color: var(--color-primary-light);
+            /* color: var(--color-background); /* Optional: change text color on hover */
         }
         .card-results-table td input[type="checkbox"] {
             margin-right: 8px;
             cursor: pointer;
+            vertical-align: middle; /* Align checkbox nicely */
         }
         .card-results-table .card-content-cell {
-            max-width: 250px; /* Limit width of content cells */
+            max-width: 250px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
-        .card-results-table .card-actions-cell button {
+        .card-results-table .card-actions-cell button { /* If you add action buttons per card row */
             margin-right: 5px;
             padding: 6px 10px;
             font-size: 0.85rem;
@@ -186,42 +230,49 @@
             padding: 20px;
             text-align: center;
             color: var(--color-gray-600);
-            background-color: var(--color-gray-100);
+            background-color: var(--color-gray-200);
             border-radius: var(--border-radius-sm);
             margin-top: 20px;
         }
-        #tag-filter-select option {
+        #tag-filter-select option { /* Styling for options within a multiple select can be tricky */
             padding: 5px;
+            background-color: var(--color-gray-100);
+            color: var(--color-foreground);
         }
-        .tag-badge {
+        .tag-badge { /* For displaying tags within the table cell */
             display: inline-block;
             background-color: var(--color-secondary);
-            color: var(--color-secondary-contrast);
+            color: var(--color-background);
             padding: 3px 8px;
             border-radius: var(--border-radius-sm);
             font-size: 0.75rem;
             margin-right: 5px;
-            margin-bottom: 3px;
+            margin-bottom: 3px; /* For wrapping */
         }
-
-     
+        /* Removed .tag-item as .tag-badge seems to cover its purpose better in this context */
+        .no-tags {
+            font-style: italic;
+            color: var(--color-gray-500);
+        }
     </style>
   </head>
 
   <body>
     <div class="app-container">
-      <nav class="sidebar">
-        <div class="logo">
-          <h1>Neuro<span>Flash</span></h1>
-        </div>
-        <ul class="nav-links">
-          <li> <a href="/"> <i class="fas fa-home"></i> <span>Home</span></a> </li>
-          <li class="active"><a href="/dashboard"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>
-          <li><a href="/study"><i class="fas fa-book-open"></i><span>Study</span></a></li>
-          <li><a href="/results"><i class="fas fa-chart-line"></i><span>Results</span></a></li>
-          <li><a href="/profile"><i class="fas fa-user"></i><span>Profile</span></a></li>
-        </ul>
-      </nav>
+        <nav class="sidebar">
+            <div class="logo">
+                <h1>Neuro<span>Flash</span></h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/"><i class="fas fa-home"></i> <span>Home</span></a></li>
+                <li class="active"><a href="/dashboard"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>
+                <li><a href="/study"><i class="fas fa-book-open"></i><span>Study</span></a></li>
+                <li><a href="/results"><i class="fas fa-chart-line"></i><span>Results</span></a></li>
+                <li><a href="/profile"><i class="fas fa-user"></i><span>Profile</span></a></li>
+                <li><a href="/leaderboard"><i class="fas fa-trophy"></i><span>Leaderboard</span></a></li>
+                <li><a href="/api/logout"><i class="fas fa-sign-out-alt"></i><span>Log Out</span></a></li>
+            </ul>
+        </nav>
 
       <main class="main-content">
         <div class="dashboard-tabs">
@@ -229,7 +280,6 @@
             <button class="tab-button" data-tab="browse"><i class="fas fa-search"></i> Card Browser</button>
         </div>
 
-        <!-- My Decks Tab Content -->
         <div id="decks-content" class="tab-content active">
             <header class="content-header">
               <h2>My Decks</h2>
@@ -246,48 +296,53 @@
                 <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
                 <div class="stat-info">
                   <h3>Total Decks</h3>
-                  <p>...</p>
+                  <p id="total-decks-stat">...</p>
                 </div>
               </div>
               <div class="stat-card fade-in-up delay-100">
                 <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
                 <div class="stat-info">
                   <h3>Cards Mastered</h3>
-                  <p>...</p>
+                  <p id="cards-mastered-stat">...</p>
                 </div>
               </div>
-              <div class="stat-card fade-in-up delay-200">
-                <div class="stat-icon"><i class="fas fa-clock"></i></div>
+              <div class="stat-card fade-in-up delay-200" id="points-stat-card">
+                <div class="stat-icon"><i class="fas fa-star"></i></div>
                 <div class="stat-info">
-                  <h3>Study Time</h3>
-                  <p>...</p>
+                  <h3>My Points</h3>
+                  <p id="my-points-stat">...</p>
                 </div>
               </div>
             </div>
 
-            <div class="decks-grid">
-              <!-- Deck cards will be populated by JavaScript -->
+            <div id="decks-grid" class="decks-grid">
+                <!-- Decks will be loaded here by JavaScript -->
+                <p id="loading-decks-message" style="display:none; text-align:center; padding:20px;">
+                    <i class="fas fa-spinner fa-spin"></i> Loading decks...
+                </p>
+                <p id="no-decks-message" style="display:none; text-align:center; padding:20px;">
+                    You haven't created any decks yet.
+                    <a href="/create-deck" class="btn primary-btn" style="margin-top:10px; display:inline-block;">Create Your First Deck</a>
+                </p>
             </div>
         </div>
 
-        <!-- Card Browser Tab Content -->
         <div id="browse-content" class="tab-content card-browser-section">
             <header class="content-header">
                 <h2>Browse Your Cards</h2>
             </header>
-                        <div class="card-browser-filters">
+            <div class="card-browser-filters">
                 <input type="search" id="card-search-input" placeholder="Search card content (front, back)..." />
                 <select id="deck-filter-select">
                      <option value="">All Decks</option>
-                     <!-- Deck options will be populated by JS -->
+                     <!-- Options will be populated by JavaScript -->
                 </select>
-                <select id="tag-filter-select" multiple title="Select tags to filter by (Ctrl/Cmd + click for multiple)">
-                    <!-- Tags will be populated by JS -->
+                <select id="tag-filter-select" multiple title="Select tags (Ctrl/Cmd + click for multiple)">
+                    <!-- Options will be populated by JavaScript -->
                 </select>
                 <button id="apply-card-filter-btn" class="btn primary-btn">
                     <i class="fas fa-search"></i> Search
                 </button>
-                <!-- ADD THIS BUTTON -->
                 <button id="clear-card-filter-btn" class="btn tertiary-btn" title="Clear all filters">
                     <i class="fas fa-times-circle"></i> Clear
                 </button>
@@ -297,7 +352,7 @@
                 <button id="create-custom-deck-btn" class="btn secondary-btn" disabled>
                     <i class="fas fa-plus-circle"></i> Create Deck from Selected
                 </button>
-                <!-- Future: <button id="create-filtered-deck-btn" class="btn secondary-btn"><i class="fas fa-filter"></i> Create Filtered Deck</button> -->
+                 <span id="selected-cards-count" style="margin-left: 10px; vertical-align: middle; color: var(--color-gray-700);">0 cards selected</span>
             </div>
 
             <div id="card-results-container">
@@ -312,11 +367,11 @@
                             <th>Back</th>
                             <th>Deck</th>
                             <th>Tags</th>
-                            <!-- <th>Actions</th> --> <!-- Add actions like edit/delete note later -->
+                            <!-- <th>Actions</th> You might want an actions column here later -->
                         </tr>
                     </thead>
                     <tbody id="card-results-tbody">
-                        <!-- Card rows will be populated by JS -->
+                        <!-- Card rows will be populated by JavaScript -->
                     </tbody>
                 </table>
                 <p id="no-cards-found-message" style="display:none;">No cards found matching your criteria.</p>
@@ -326,6 +381,7 @@
       </main>
     </div>
 
+    <!-- Ensure this path is correct for your Flask static files -->
     <script src="{{url_for('static', filename='js/dashboard.js')}}"></script>
   </body>
 </html>

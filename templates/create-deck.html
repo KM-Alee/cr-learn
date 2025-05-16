@@ -10,42 +10,47 @@
     <link rel="stylesheet" href="{{url_for('static', filename='css/global.css')}}" />
     <link rel="stylesheet" href="{{url_for('static', filename='css/create-deck.css')}}" />
     <title>Create Deck - NeuroFlash</title>
+    <style>
+      #addCard {
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        z-index: 1000;
+        /* You can add more specific FAB styling here if you want a circular button, e.g.:
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        */
+      }
+      /* If using a circular FAB and you want to hide text, add a span around text:
+      #addCard .button-text { display: none; }
+      #addCard i { margin-right: 0; }
+      */
+    </style>
   </head>
 
   <body>
-    <div class="app-container">
-      <nav class="sidebar">
-        <div class="logo">
-          <h1>Neuro<span>Flash</span></h1>
-        </div>
-        <ul class="nav-links">
-          <li> <a href="/"> <i class="fas fa-home"></i> <span>Home</span></a> </li> 
-          <li>
-            <a href="/dashboard">
-              <i class="fas fa-home"></i>
-              <span>Dashboard</span>
-            </a>
-          </li>
-          <li>
-            <a href="/study">
-              <i class="fas fa-book-open"></i>
-              <span>Study</span>
-            </a>
-          </li>
-          <li>
-            <a href="/results">
-              <i class="fas fa-chart-line"></i>
-              <span>Results</span>
-            </a>
-          </li>
-          <li>
-            <a href="/profile">
-              <i class="fas fa-user"></i>
-              <span>Profile</span>
-            </a>
-          </li>
-        </ul>
-      </nav>
+     <div class="app-container">
+        <nav class="sidebar">
+            <div class="logo">
+                <h1>Neuro<span>Flash</span></h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/"><i class="fas fa-home"></i> <span>Home</span></a></li>
+                <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>
+                <li><a href="/study"><i class="fas fa-book-open"></i><span>Study</span></a></li>
+                <li><a href="/results"><i class="fas fa-chart-line"></i><span>Results</span></a></li>
+                <li><a href="/profile"><i class="fas fa-user"></i><span>Profile</span></a></li>
+                <li class="active"><a href="/leaderboard"><i class="fas fa-trophy"></i><span>Leaderboard</span></a></li>
+                <li><a href="/api/logout"><i class="fas fa-sign-out-alt"></i><span>Log Out</span></a></li>
+            </ul>
+        </nav>
 
       <main class="main-content">
         <header class="content-header">
@@ -87,14 +92,17 @@
           <div class="cards-section">
             <div class="section-header">
               <h3>Flashcards</h3>
-              <button class="btn secondary-btn" id="addCard">
-                <i class="fas fa-plus"></i> Add Card
-              </button>
+              <!-- The "Add Card" button is still here structurally, but CSS makes it float -->
             </div>
-
-            <div class="cards-list" id="cardsList"></div>
+            <div class="cards-list" id="cardsList">
+                <!-- Cards will be added here by JS -->
+            </div>
           </div>
         </div>
+        <!-- Moved Add Card button outside of cards-section for cleaner fixed positioning context, though CSS could handle it inside too -->
+        <button class="btn secondary-btn" id="addCard">
+            <i class="fas fa-plus"></i> Add Card
+        </button>
       </main>
     </div>
 

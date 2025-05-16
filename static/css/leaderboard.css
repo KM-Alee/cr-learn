@@ -1,0 +1,160 @@
+/* static/css/leaderboard.css */
+
+/* Styles for the header and title (can be shared with dashboard if using global styles) */
+.main-content .content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg); /* Match dashboard */
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--color-gray-300);
+}
+.main-content .content-header h2 {
+    font-size: var(--font-size-2xl); /* Match dashboard */
+    color: var(--color-foreground);
+}
+.main-content .content-header h2 i {
+    margin-right: var(--spacing-sm);
+    color: var(--color-primary); /* Or a gold/trophy color like #FFD700 */
+}
+
+/* Style for the optional admin update button */
+#populateLeaderboardBtn {
+    /* Add specific button styles if needed, or rely on .btn .secondary-btn */
+}
+
+
+/* Style for the current user highlight section */
+.current-user-highlight {
+    background-color: rgba(var(--color-primary-rgb, 76, 201, 240), 0.1); /* Use primary color with transparency */
+    border: 1px solid var(--color-primary);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+}
+.current-user-highlight h3 {
+    margin-top: 0;
+    margin-bottom: var(--spacing-xs);
+    font-size: var(--font-size-lg);
+    color: var(--color-primary-light); /* Use a lighter primary for heading */
+}
+.current-user-highlight p {
+    margin: 0;
+    font-size: var(--font-size-md);
+    color: var(--color-gray-600);
+}
+.current-user-highlight strong {
+    color: var(--color-primary); /* Make rank number stand out */
+}
+
+
+/* Style for the main leaderboard container */
+.leaderboard-container {
+    background-color: var(--color-gray-100); /* Card background, consistent with dashboard */
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-sm);
+    overflow-x: auto; /* Make table scrollable on small screens */
+}
+
+/* Styles for messages (loading, no data, error) */
+.loading-message, .info-message, .error-message {
+    text-align: center;
+    padding: var(--spacing-xl) 0;
+    font-size: var(--font-size-lg);
+    color: var(--color-gray-600);
+}
+.loading-message i {
+    margin-right: var(--spacing-sm);
+}
+.error-message {
+    color: var(--color-danger); /* Danger color for errors */
+}
+
+/* Style for the leaderboard table */
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse; /* Remove space between borders */
+    margin-top: var(--spacing-md); /* Add space if displayed after messages */
+    /* No box-shadow or border-radius here if applied to container */
+}
+
+/* Table headers */
+.leaderboard-table th,
+.leaderboard-table td {
+    padding: var(--spacing-sm) var(--spacing-md);
+    text-align: left; /* Default text alignment */
+    border-bottom: 1px solid var(--color-gray-300); /* Separator line */
+}
+
+.leaderboard-table th {
+    background-color: var(--color-gray-200); /* Header background */
+    color: var(--color-gray-700); /* Header text color */
+    font-weight: 600;
+    font-size: var(--font-size-md);
+}
+
+/* Zebra striping for rows */
+.leaderboard-table tbody tr:nth-child(even) {
+    background-color: var(--color-gray-100); /* Slightly darker for contrast */
+}
+.leaderboard-table tbody tr:nth-child(odd) {
+    background-color: var(--color-background); /* Match overall dark background */
+}
+
+/* Hover effect on rows */
+.leaderboard-table tbody tr:hover {
+    background-color: rgba(var(--color-primary-rgb, 76, 201, 240), 0.1); /* Subtle highlight */
+    cursor: default; /* Indicate not clickable, unless rows become links */
+}
+
+/* Specific cell styles */
+.leaderboard-table td.rank-cell {
+    font-weight: 700;
+    color: var(--color-primary); /* Color for rank number */
+    width: 80px; /* Fixed width for rank column */
+    text-align: center; /* Center the rank number */
+}
+.leaderboard-table td.points-cell {
+    font-weight: 500;
+    text-align: right; /* Align points to the right */
+    width: 120px; /* Fixed width for points column */
+}
+
+/* Highlight for the logged-in user's row if they appear in the table */
+.leaderboard-table tr.current-user-row td {
+    background-color: rgba(var(--color-secondary-rgb, 247, 37, 133), 0.2); /* Distinct highlight */
+    font-weight: bold; /* Make text bold */
+    /* color: var(--color-secondary-contrast); Optional: Change text color if needed */
+}
+/* Ensure the rank and points color stays visible on the highlighted row */
+.leaderboard-table tr.current-user-row td.rank-cell {
+    color: var(--color-secondary); /* Or another color that contrasts */
+}
+/* Points cell specific highlight */
+.leaderboard-table tr.current-user-row td.points-cell {
+     /* color: inherit; */ /* Inherit color or set explicitly */
+}
+
+
+/* Pagination Controls */
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: var(--spacing-lg);
+    gap: var(--spacing-md);
+}
+.pagination-controls .btn {
+    padding: var(--spacing-xs) var(--spacing-sm); /* Smaller buttons */
+}
+.pagination-controls span#pageInfo {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+}
+.pagination-controls .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
