@@ -1,63 +1,172 @@
+/* static/css/results.css */
+
+.main-content {
+  padding: var(--spacing-lg);
+}
+
+/* Results Header */
 .content-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-xl);
-}
-
-.results-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--spacing-lg);
-}
-
-.result-card {
-  background-color: var(--color-gray-200);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-gray-300);
+  background-color: var(--color-gray-100);
   border-radius: var(--border-radius-md);
-  padding: var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
 }
 
-.result-card h3 {
-  font-size: var(--font-size-xl);
-  margin-bottom: var(--spacing-md);
+.content-header h2 {
+  font-size: var(--font-size-2xl);
+  color: var(--color-foreground);
+  font-weight: 700;
+  margin: 0;
 }
 
+.date-filter {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+.date-filter .btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-sm);
+}
+
+/* Results Layout Container - New wrapper for grid */
+.results-layout-container {
+    display: grid;
+    grid-template-areas:
+        "performance stats"
+        "activity activity"; /* Recent activity spans both columns */
+    grid-template-columns: 1fr 1fr; /* Two columns, equal width */
+    gap: var(--spacing-xl); /* Gap between grid items */
+    margin-bottom: var(--spacing-xl);
+}
+
+/* Assign cards to grid areas */
+.result-card.performance {
+    grid-area: performance;
+}
+.result-card.stats {
+    grid-area: stats;
+}
+.result-card.recent-activity {
+    grid-area: activity;
+    /* Make this card's content scrollable */
+    max-height: 500px; /* Example height, adjust as needed */
+    overflow-y: auto; /* Enable vertical scrolling */
+    display: flex; /* Keep flex structure from .result-card */
+    flex-direction: column;
+    /* Ensure padding/border is respected for scrolling */
+    /* The content inside will scroll, but the padding/border of the card will remain */
+}
+
+/* Sticky header for the Recent Activity card */
+.result-card.recent-activity h3 {
+    position: sticky; /* Make title sticky */
+    top: 0; /* Stick to the top of the scrolling container */
+    background-color: var(--color-gray-100); /* Add background so content scrolls under it */
+    z-index: 1; /* Ensure title is above scrolling content */
+    padding-bottom: var(--spacing-md); /* Add space below sticky title */
+    /* Adjust margins to match card padding and span full width */
+    margin-top: calc(var(--spacing-xl) * -1);
+    margin-left: calc(var(--spacing-xl) * -1);
+    margin-right: calc(var(--spacing-xl) * -1);
+    padding-left: var(--spacing-xl);
+    padding-right: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg); /* Space between sticky header and list */
+}
+
+
+/* Style for scrollbar (optional) */
+.result-card.recent-activity::-webkit-scrollbar { width: 8px; }
+.result-card.recent-activity::-webkit-scrollbar-track { background: var(--color-gray-200); border-radius: var(--border-radius-md); }
+.result-card.recent-activity::-webkit-scrollbar-thumb { background: var(--color-primary); border-radius: var(--border-radius-md); }
+.result-card.recent-activity::-webkit-scrollbar-thumb:hover { background: var(--color-primary-light); }
+
+
+/* Result Card base styles */
+.result-card {
+  background-color: var(--color-gray-100);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-gray-200);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Important for sticky header inside */
+}
+
+.result-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Internal styles for charts and stats */
 .chart-container {
   height: 300px;
+  flex-grow: 1;
 }
 
 .stats-list {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-md);
+  gap: var(--spacing-md) var(--spacing-xl);
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
+  background-color: var(--color-gray-200);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--color-gray-300);
 }
 
 .stat-label {
   font-size: var(--font-size-sm);
   color: var(--color-gray-500);
-}
-
-.stat-value {
-  font-size: var(--font-size-xl);
+  margin-bottom: var(--spacing-xs);
+  text-transform: uppercase;
   font-weight: 600;
 }
 
+.stat-value {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-primary-light);
+}
+
+/* Recent Activity List */
 .activity-list {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+  /* No need for flex-grow: 1 here if parent is scrollable */
 }
 
 .activity-item {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px dashed var(--color-gray-300);
+  transition: background-color var(--transition-fast);
 }
+.activity-item:last-child {
+    border-bottom: none;
+}
+.activity-item:hover {
+    background-color: rgba(var(--color-primary-rgb, 76, 201, 240), 0.05);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-sm);
+    margin: 0 calc(var(--spacing-sm) * -1); /* Compensate for padding */
+}
+
 
 .activity-icon {
   width: 40px;
@@ -68,11 +177,23 @@
   align-items: center;
   justify-content: center;
   color: var(--color-background);
+  font-size: var(--font-size-md);
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
 }
+.activity-icon .fa-check { background-color: var(--color-success); }
+.activity-icon .fa-clock { background-color: var(--color-warning); }
+.activity-icon .fa-plus { background-color: var(--color-tertiary); }
 
+
+.activity-details {
+    flex-grow: 1;
+}
 .activity-details h4 {
   font-size: var(--font-size-md);
   margin-bottom: var(--spacing-xs);
+  color: var(--color-foreground);
+  font-weight: 600;
 }
 
 .activity-details p {
@@ -84,4 +205,73 @@
 .activity-time {
   font-size: var(--font-size-xs);
   color: var(--color-gray-400);
+  font-style: italic;
+}
+
+/* Animation utility class (assuming fadeIn and fadeInUp are in animation.css) */
+.animate-in {
+    animation: fadeInUp 0.8s ease-out forwards;
+}
+
+/* Initial hidden state if JS will add the class */
+.results-layout-container > .result-card {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+
+@media (max-width: 768px) {
+    .content-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+    .date-filter {
+        width: 100%;
+    }
+    .date-filter .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .results-layout-container {
+        grid-template-areas:
+            "performance"
+            "stats"
+            "activity"; /* Stack all items vertically */
+        grid-template-columns: 1fr; /* Single column */
+        gap: var(--spacing-md); /* Reduce gap */
+    }
+
+     .result-card {
+         padding: var(--spacing-lg);
+     }
+
+    .result-card.recent-activity {
+        max-height: 400px;
+    }
+    .result-card.recent-activity h3 {
+        /* Adjust sticky header padding/margins for smaller screens */
+        padding-left: var(--spacing-lg);
+        padding-right: var(--spacing-lg);
+        margin-top: calc(var(--spacing-lg) * -1);
+        margin-left: calc(var(--spacing-lg) * -1);
+        margin-right: calc(var(--spacing-lg) * -1);
+    }
+
+    .stats-list {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+
+    .activity-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .activity-icon {
+        margin-bottom: var(--spacing-xs);
+    }
+    .activity-details {
+        width: 100%;
+    }
 }

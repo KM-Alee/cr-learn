@@ -9,6 +9,7 @@
     />
     <link rel="stylesheet" href="{{url_for('static', filename='css/global.css')}}" />
     <link rel="stylesheet" href="{{url_for('static', filename='css/results.css')}}" />
+    <link rel="stylesheet" href="{{url_for('static', filename='css/animation.css')}}" />
     <title>Results - NeuroFlash</title>
   </head>
 
@@ -22,9 +23,9 @@
                 <li><a href="/"><i class="fas fa-home"></i> <span>Home</span></a></li>
                 <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>
                 <li><a href="/study"><i class="fas fa-book-open"></i><span>Study</span></a></li>
-                <li><a href="/results"><i class="fas fa-chart-line"></i><span>Results</span></a></li>
+                <li class="active"><a href="/results"><i class="fas fa-chart-line"></i><span>Results</span></a></li>
                 <li><a href="/profile"><i class="fas fa-user"></i><span>Profile</span></a></li>
-                <li class="active"><a href="/leaderboard"><i class="fas fa-trophy"></i><span>Leaderboard</span></a></li>
+                <li><a href="/leaderboard"><i class="fas fa-trophy"></i><span>Leaderboard</span></a></li>
                 <li><a href="/api/logout"><i class="fas fa-sign-out-alt"></i><span>Log Out</span></a></li>
             </ul>
         </nav>
@@ -39,15 +40,17 @@
           </div>
         </header>
 
-        <div class="results-grid">
-          <div class="result-card performance">
+        <!-- New wrapper for the grid layout -->
+        <div class="results-layout-container">
+          <!-- Result Cards - Added animate-in classes with stagger delays -->
+          <div class="result-card performance animate-in">
             <h3>Performance Overview</h3>
             <div class="chart-container">
               <canvas id="performanceChart"></canvas>
             </div>
           </div>
 
-          <div class="result-card stats">
+          <div class="result-card stats animate-in delay-100">
             <h3>Study Statistics</h3>
             <div class="stats-list">
               <div class="stat-item">
@@ -69,7 +72,7 @@
             </div>
           </div>
 
-          <div class="result-card recent-activity">
+          <div class="result-card recent-activity animate-in delay-200">
             <h3>Recent Activity</h3>
             <div class="activity-list">
               <div class="activity-item">
@@ -102,6 +105,14 @@
                   <span class="activity-time">2 days ago</span>
                 </div>
               </div>
+                <!-- Add more activity items here to test scrolling -->
+                 <div class="activity-item"> <div class="activity-icon"><i class="fas fa-check-double"></i></div> <div class="activity-details"><h4>CSS Flexbox</h4><p>Reviewed 15 cards • 95% accuracy</p><span class="activity-time">3 days ago</span></div> </div>
+                 <div class="activity-item"> <div class="activity-icon"><i class="fas fa-book-reader"></i></div> <div class="activity-details"><h4>HTML Semantic Tags</h4><p>Studied for 20 minutes</p><span class="activity-time">4 days ago</span></div> </div>
+                 <div class="activity-item"> <div class="activity-icon"><i class="fas fa-check"></i></div> <div class="activity-details"><h4>Algorithmic Complexity</h4><p>Completed 40 cards • 80% accuracy</p><span class="activity-time">5 days ago</span></div> </div>
+                 <div class="activity-item"> <div class="activity-icon"><i class="fas fa-clock"></i></div> <div class="activity-details"><h4>SQL Joins</h4><p>Studied for 10 minutes</p><span class="activity-time">6 days ago</span></div> </div>
+                 <div class="activity-item"> <div class="activity-icon"><i class="fas fa-plus"></i></div> <div class="activity-details"><h4>New Deck: Docker Basics</h4><p>Created 20 new flashcards</p><span class="activity-time">1 week ago</span></div> </div>
+                 <div class="activity-item"> <div class="activity-icon"><i class="fas fa-check"></i></div> <div class="activity-details"><h4>Python Decorators</h4><p>Completed 18 cards • 88% accuracy</p><span class="activity-time">1 week ago</span></div> </div>
+                 <div class="activity-item"> <div class="activity-icon"><i class="fas fa-clock"></i></div> <div class="activity-details"><h4>Networking Fundamentals</h4><p>Studied for 25 minutes</p><span class="activity-time">1 week ago</span></div> </div>
             </div>
           </div>
         </div>
@@ -110,5 +121,22 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{url_for('static', filename='js/results.js')}}"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+             // Add animate-in class to result cards within the new layout container
+             const resultCards = document.querySelectorAll('.results-layout-container > .result-card');
+             resultCards.forEach((card, index) => {
+                 // Add a small delay for a staggered effect
+                 setTimeout(() => {
+                     card.classList.add('animate-in');
+                 }, 100 * index); // 100ms delay for each subsequent card
+             });
+
+             // Note: Chart.js initialization and data loading is handled by results.js
+             // This script only handles initial page load animations.
+        });
+    </script>
+
   </body>
 </html>

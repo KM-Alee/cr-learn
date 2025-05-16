@@ -1,8 +1,20 @@
+/* static/css/profile.css */
+
+.main-content {
+  padding: var(--spacing-lg);
+}
+
 .content-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-gray-300);
+}
+.content-header h2 {
+  font-size: var(--font-size-2xl);
+  color: var(--color-foreground);
 }
 
 .profile-container {
@@ -12,51 +24,83 @@
 }
 
 .profile-section {
-  background-color: var(--color-gray-200);
+  background-color: var(--color-gray-100); /* Use a slightly darker background for sections */
   border-radius: var(--border-radius-md);
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xl); /* Increased padding */
+  box-shadow: var(--shadow-md); /* Add shadow */
+  border: 1px solid var(--color-gray-200); /* Subtle border */
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast); /* Add transition */
 }
+
+.profile-section:hover {
+  transform: translateY(-3px); /* Lift slightly on hover */
+  box-shadow: var(--shadow-lg); /* Stronger shadow on hover */
+}
+
 
 .profile-header {
   display: flex;
   align-items: center;
   gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl); /* Increased margin */
+  padding-bottom: var(--spacing-md); /* Add padding below header */
+  border-bottom: 1px solid var(--color-gray-300); /* Separator line */
 }
 
 .profile-avatar {
   position: relative;
+  width: 100px; /* Fixed size */
+  height: 100px; /* Fixed size */
+  flex-shrink: 0; /* Prevent shrinking */
+  transition: transform var(--transition-fast) ease-out; /* Add animation */
+}
+.profile-avatar:hover {
+    transform: scale(1.05); /* Slightly enlarge on hover */
 }
 
+
 .profile-avatar img {
-  width: 100px;
-  height: 100px;
+  width: 100%; /* Use 100% of container */
+  height: 100%; /* Use 100% of container */
   border-radius: var(--border-radius-full);
   object-fit: cover;
+  border: 3px solid var(--color-primary); /* Highlight avatar with primary color */
+  box-shadow: var(--shadow-sm);
 }
 
 .change-avatar-btn {
   position: absolute;
-  bottom: 0;
-  right: 0;
+  bottom: 2px; /* Adjust position */
+  right: 2px; /* Adjust position */
   background-color: var(--color-primary);
   color: var(--color-background);
-  border: none;
+  border: 2px solid var(--color-gray-100); /* Border to stand out from background */
   border-radius: var(--border-radius-full);
-  width: 32px;
-  height: 32px;
+  width: 36px; /* Slightly larger button */
+  height: 36px; /* Slightly larger button */
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  font-size: var(--font-size-sm);
+  box-shadow: var(--shadow-md);
+  transition: background-color var(--transition-fast), transform var(--transition-fast);
+}
+.change-avatar-btn:hover {
+    background-color: var(--color-primary-light);
+    transform: scale(1.1); /* Pop out slightly on hover */
 }
 
+
 .profile-info h3 {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-2xl); /* Larger name */
   margin-bottom: var(--spacing-xs);
+  color: var(--color-foreground);
+  font-weight: 700;
 }
 
 .profile-info p {
+  font-size: var(--font-size-md); /* Larger email */
   color: var(--color-gray-500);
 }
 
@@ -75,15 +119,26 @@
 .form-group label {
   font-size: var(--font-size-sm);
   color: var(--color-gray-500);
+  font-weight: 600; /* Make labels slightly bolder */
 }
 
-.form-group input,
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="number"], /* Style number input */
 .form-group select {
-  padding: var(--spacing-sm);
+  padding: var(--spacing-md); /* Increased padding */
   border: 1px solid var(--color-gray-300);
   border-radius: var(--border-radius-sm);
-  background-color: var(--color-gray-100);
+  background-color: var(--color-gray-200); /* Match section background */
   color: var(--color-foreground);
+  font-size: var(--font-size-md);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb, 76, 201, 240), 0.2);
 }
 
 .preferences-list {
@@ -96,23 +151,38 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: var(--spacing-sm) 0; /* Add some vertical padding */
+  border-bottom: 1px dashed var(--color-gray-300); /* Dashed separator */
+}
+.preference-item:last-child {
+    border-bottom: none; /* Remove border for last item */
+}
+
+.preference-info {
+    flex-grow: 1; /* Allow info to take space */
+    margin-right: var(--spacing-lg); /* Space between info and control */
 }
 
 .preference-info h4 {
   font-size: var(--font-size-md);
   margin-bottom: var(--spacing-xs);
+  color: var(--color-foreground);
+  font-weight: 600;
 }
 
-.preference-info p {
+.preference-info p.setting-description { /* Style for the description text */
   font-size: var(--font-size-sm);
   color: var(--color-gray-500);
+  margin-top: 0; /* Ensure no extra margin */
 }
 
+/* Switch styles (kept mostly as is, ensure color variables are used) */
 .switch {
   position: relative;
   display: inline-block;
-  width: 60px;
-  height: 34px;
+  width: 50px; /* Adjusted width */
+  height: 28px; /* Adjusted height */
+  flex-shrink: 0; /* Prevent shrinking */
 }
 
 .switch input {
@@ -130,14 +200,14 @@
   bottom: 0;
   background-color: var(--color-gray-400);
   transition: 0.4s;
-  border-radius: 34px;
+  border-radius: 28px; /* Match height for roundness */
 }
 
 .slider:before {
   position: absolute;
   content: "";
-  height: 26px;
-  width: 26px;
+  height: 20px; /* Adjusted size */
+  width: 20px; /* Adjusted size */
   left: 4px;
   bottom: 4px;
   background-color: var(--color-background);
@@ -150,23 +220,48 @@ input:checked + .slider {
 }
 
 input:checked + .slider:before {
-  transform: translateX(26px);
+  transform: translateX(22px); /* Adjusted translate */
 }
+
 
 .danger-zone {
   border: 1px solid var(--color-danger);
+  background-color: var(--color-gray-100); /* Same background as other sections */
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+.danger-zone:hover {
+     transform: translateY(-3px);
+     box-shadow: var(--shadow-lg);
+     border-color: var(--color-danger-light); /* Highlight border on hover */
+}
+
+
+.danger-actions {
+    display: flex;
+    flex-direction: column; /* Stack actions if more are added */
+    gap: var(--spacing-md);
 }
 
 .danger-action {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: var(--spacing-md) 0; /* Vertical padding */
+  border-bottom: 1px dashed var(--color-gray-400); /* Subtle separator */
 }
+.danger-action:last-child {
+    border-bottom: none;
+}
+
 
 .danger-info h4 {
   font-size: var(--font-size-md);
   margin-bottom: var(--spacing-xs);
   color: var(--color-danger);
+  font-weight: 600;
 }
 
 .danger-info p {
@@ -177,8 +272,64 @@ input:checked + .slider:before {
 .danger-btn {
   background-color: var(--color-danger);
   color: var(--color-background);
+  padding: var(--spacing-sm) var(--spacing-md); /* Adjusted padding */
+  font-size: var(--font-size-sm); /* Slightly smaller text */
+  font-weight: 600;
+  border-radius: var(--border-radius-sm);
+  transition: background-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+  border: none;
+  cursor: pointer;
 }
 
 .danger-btn:hover {
-  background-color: var(--color-danger-dark);
+  background-color: var(--color-danger); /* Keep background red */
+  box-shadow: 0 0 15px rgba(var(--color-danger-rgb, 231, 76, 60), 0.6); /* Add red glow */
+  transform: translateY(-2px);
+}
+
+
+/* Animation utility class (assuming fadeIn and fadeInUp are in animation.css) */
+.animate-in {
+    animation: fadeInUp 0.6s ease-out forwards; /* Apply animation */
+}
+
+
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column; /* Stack avatar and info */
+        align-items: center;
+        text-align: center;
+        gap: var(--spacing-md);
+    }
+    .profile-info h3,
+    .profile-info p {
+        text-align: center;
+    }
+
+    .profile-section {
+        padding: var(--spacing-lg); /* Reduce padding on smaller screens */
+    }
+
+    .preference-item {
+        flex-direction: column; /* Stack preference info and switch */
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+    .preference-info {
+         margin-right: 0; /* Remove margin */
+         width: 100%; /* Take full width */
+    }
+
+    .danger-action {
+         flex-direction: column; /* Stack danger info and button */
+         align-items: flex-start;
+         gap: var(--spacing-sm);
+    }
+    .danger-info {
+        width: 100%;
+    }
+    .danger-btn {
+        width: 100%; /* Full width button */
+        text-align: center;
+    }
 }

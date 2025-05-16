@@ -9,6 +9,7 @@
     />
     <link rel="stylesheet" href="{{url_for('static', filename='css/global.css')}}" />
     <link rel="stylesheet" href="{{url_for('static', filename='css/profile.css')}}" />
+    <link rel="stylesheet" href="{{url_for('static', filename='css/animation.css')}}" />
     <title>Profile - NeuroFlash</title>
   </head>
 
@@ -19,12 +20,11 @@
                 <h1>Neuro<span>Flash</span></h1>
             </div>
             <ul class="nav-links">
-                <li><a href="/"><i class="fas fa-home"></i> <span>Home</span></a></li>
                 <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>
                 <li><a href="/study"><i class="fas fa-book-open"></i><span>Study</span></a></li>
                 <li><a href="/results"><i class="fas fa-chart-line"></i><span>Results</span></a></li>
-                <li><a href="/profile"><i class="fas fa-user"></i><span>Profile</span></a></li>
-                <li class="active"><a href="/leaderboard"><i class="fas fa-trophy"></i><span>Leaderboard</span></a></li>
+                <li class="active"><a href="/profile"><i class="fas fa-user"></i><span>Profile</span></a></li>
+                <li><a href="/leaderboard"><i class="fas fa-trophy"></i><span>Leaderboard</span></a></li>
                 <li><a href="/api/logout"><i class="fas fa-sign-out-alt"></i><span>Log Out</span></a></li>
             </ul>
         </nav>
@@ -82,39 +82,42 @@
             </form>
           </div>
 
-                
-<div class="profile-section"> <!-- Could be a new section or part of preferences -->
-    <h3>Study Settings</h3>
-    <div class="preferences-list"> <!-- Reuse preferences-list class or create a new one -->
-      
-      <div class="preference-item form-group">
-        <label for="new-cards-per-day">New Cards Per Day</label>
-        <input type="number" id="new-cards-per-day" value="20" min="1" />
-        <p class="setting-description">Maximum number of new cards introduced daily.</p>
-      </div>
 
-       <div class="preference-item form-group">
-        <label for="max-reviews-per-day">Maximum Reviews Per Day</label>
-        <input type="number" id="max-reviews-per-day" value="100" min="1" />
-        <p class="setting-description">Maximum number of review cards shown daily (prevents overload).</p>
-      </div>
+            <div class="profile-section">
+                <h3>Study Settings</h3>
+                <div class="preferences-list">
 
-       <div class="preference-item form-group">
-        <label for="learning-steps">Learning Steps (Minutes)</label>
-        <input type="text" id="learning-steps" value="1 10" placeholder="e.g., 1 10 or 1 10 1440" />
-        <p class="setting-description">Space repeats for learning cards (e.g., "1 10" for 1min, then 10min).</p>
-      </div>
+                  <div class="preference-item form-group">
+                    <label for="new-cards-per-day">New Cards Per Day</label>
+                    <input type="number" id="new-cards-per-day" value="20" min="1" />
+                  </div>
+                  <p class="setting-description">Maximum number of new cards introduced daily.</p>
 
-      <div class="preference-item form-group">
-        <label for="ease-bonus">Starting Ease Bonus</label>
-        <input type="number" id="ease-bonus" value="1.3" step="0.1" min="1.0" />
-        <p class="setting-description">Multiplier for the initial ease factor of new cards.</p>
-      </div>
-      <!-- Add other SRA settings here if needed -->
-    </div>
-  </div>
 
-    
+                   <div class="preference-item form-group">
+                    <label for="max-reviews-per-day">Maximum Reviews Per Day</label>
+                    <input type="number" id="max-reviews-per-day" value="100" min="1" />
+                  </div>
+                   <p class="setting-description">Maximum number of review cards shown daily (prevents overload).</p>
+
+
+                   <div class="preference-item form-group">
+                    <label for="learning-steps">Learning Steps (Minutes)</label>
+                    <input type="text" id="learning-steps" value="1 10" placeholder="e.g., 1 10 or 1 10 1440" />
+                  </div>
+                  <p class="setting-description">Space repeats for learning cards (e.g., "1 10" for 1min, then 10min).</p>
+
+
+                  <div class="preference-item form-group">
+                    <label for="ease-bonus">Starting Ease Bonus</label>
+                    <input type="number" id="ease-bonus" value="1.3" step="0.1" min="1.0" />
+                  </div>
+                   <p class="setting-description">Multiplier for the initial ease factor of new cards.</p>
+
+                </div>
+            </div>
+
+
 
           <div class="profile-section danger-zone">
             <h3>Danger Zone</h3>
@@ -135,5 +138,43 @@
     </div>
 
     <script src="{{url_for('static', filename='js/profile.js')}}"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Trigger avatar input click when camera button is clicked
+            const changeAvatarBtn = document.getElementById('changeAvatar');
+            const avatarInput = document.getElementById('avatarInput');
+            if (changeAvatarBtn && avatarInput) {
+                changeAvatarBtn.addEventListener('click', function() {
+                    avatarInput.click();
+                });
+            }
+
+            // Animate sections on page load
+            const profileSections = document.querySelectorAll('.profile-section');
+            profileSections.forEach((section, index) => {
+                // Add a small delay for a staggered effect
+                setTimeout(() => {
+                    section.classList.add('animate-in');
+                }, 100 * index); // 100ms delay for each subsequent section
+            });
+
+            // Handle file input change for avatar preview (optional visual enhancement)
+             if (avatarInput) {
+                 avatarInput.addEventListener('change', function() {
+                     const file = this.files[0];
+                     const avatarImg = document.getElementById('avatarImg');
+                     if (file && avatarImg) {
+                         const reader = new FileReader();
+                         reader.onload = function(e) {
+                             avatarImg.src = e.target.result;
+                         }
+                         reader.readAsDataURL(file);
+                     }
+                 });
+             }
+        });
+    </script>
+
   </body>
 </html>

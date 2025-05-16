@@ -1,15 +1,34 @@
-.content-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-xl);
+/* static/css/dashboard.css */
+
+/* Dashboard Layout */
+.main-content {
+    padding: var(--spacing-lg); /* Adjust padding if needed, matching global */
 }
 
+/* Content Header */
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-md); /* Added padding-bottom */
+    border-bottom: 1px solid var(--color-gray-300); /* Added border-bottom */
+}
+.content-header h2 {
+    font-size: var(--font-size-2xl);
+    color: var(--color-foreground);
+    display: flex; /* Align icon and text */
+    align-items: center;
+    gap: var(--spacing-sm); /* Space between icon and text */
+}
+
+
+/* Stats Grid */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-xl);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Adjusted min width slightly */
+  gap: var(--spacing-xl); /* Increased gap */
+  margin-bottom: var(--spacing-2xl); /* Increased margin */
 }
 
 .stat-card {
@@ -20,34 +39,41 @@
   align-items: center;
   box-shadow: var(--shadow-md);
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  border: 1px solid var(--color-gray-400); /* Added a subtle border */
 }
 
 .stat-card:hover {
   transform: translateY(-5px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-glow); /* Use glow on hover */
 }
 
 .stat-icon {
   font-size: var(--font-size-3xl);
   color: var(--color-primary);
   margin-right: var(--spacing-md);
+  /* Add a subtle background or border around icon? */
+  /* width: 50px; height: 50px; border-radius: var(--border-radius-sm); background-color: rgba(var(--color-primary-rgb, 76, 201, 240), 0.1); display: flex; align-items: center; justify-content: center; */
 }
 
 .stat-info h3 {
   font-size: var(--font-size-sm);
   color: var(--color-gray-500);
   margin-bottom: var(--spacing-xs);
+  text-transform: uppercase; /* Uppercase labels */
+  letter-spacing: 0.05em;
 }
 
 .stat-info p {
-  font-size: var(--font-size-2xl);
-  font-weight: 600;
+  font-size: var(--font-size-3xl); /* Increased font size */
+  font-weight: 700; /* Bolder font */
+  color: var(--color-foreground);
 }
 
+/* Decks Grid */
 .decks-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: var(--spacing-lg);
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Adjusted min width */
+  gap: var(--spacing-xl); /* Increased gap */
 }
 
 .deck-card {
@@ -56,43 +82,54 @@
   padding: var(--spacing-lg);
   box-shadow: var(--shadow-md);
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  border: 1px solid var(--color-gray-300); /* Added border */
+  display: flex; /* Use flex for internal layout */
+  flex-direction: column;
+  justify-content: space-between; /* Push actions to bottom */
 }
 
 .deck-card:hover {
   transform: translateY(-5px);
   box-shadow: var(--shadow-lg);
+  border-color: var(--color-primary-light); /* Highlight border on hover */
 }
 
 .deck-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start; /* Align items to top */
   margin-bottom: var(--spacing-md);
 }
 
 .deck-header h3 {
   font-size: var(--font-size-lg);
+  color: var(--color-foreground);
+  margin-right: var(--spacing-md); /* Space from options button */
 }
 
 .card-count {
   font-size: var(--font-size-sm);
   color: var(--color-gray-500);
+  white-space: nowrap; /* Prevent wrapping */
 }
 
 .deck-progress {
   margin-bottom: var(--spacing-md);
+  flex-grow: 1; /* Allow progress/info area to grow */
 }
 
 .progress-bar {
-  height: 4px;
-  background-color: var(--color-gray-300);
+  height: 6px; /* Slightly thicker */
+  background-color: var(--color-gray-400); /* Darker background */
   border-radius: var(--border-radius-full);
   overflow: hidden;
+  margin-bottom: var(--spacing-xs);
 }
 
 .progress {
   height: 100%;
   background: linear-gradient(90deg, var(--color-primary), var(--color-quaternary));
+  transition: width 0.5s ease-in-out; /* Animate progress change */
 }
 
 .progress-text {
@@ -104,26 +141,362 @@
 .deck-actions {
   display: flex;
   justify-content: space-between;
+  align-items: center; /* Align buttons and count vertically */
+  padding-top: var(--spacing-md); /* Space above actions */
+  border-top: 1px solid var(--color-gray-300); /* Separator line */
 }
 
+/* Icon Buttons in deck actions */
 .icon-btn {
   background: none;
   border: none;
   color: var(--color-gray-500);
   cursor: pointer;
   transition: color var(--transition-fast);
+  padding: 0 var(--spacing-sm); /* Add some padding */
+  font-size: var(--font-size-md);
 }
 
 .icon-btn:hover {
   color: var(--color-primary);
 }
 
+/* Styles for Deck Context Menu */
+.deck-options-button-wrapper { /* Added a wrapper for positioning context menu */
+    position: relative;
+    /* Removed display:inline-block; to allow flex item behavior */
+}
+.deck-context-menu {
+    position: absolute;
+    top: calc(100% + 5px); /* Position below the button */
+    right: 0;
+    background-color: var(--color-gray-100); /* Menu background */
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-lg); /* Stronger shadow for menus */
+    z-index: 1000; /* Ensure it's on top */
+    list-style: none;
+    padding: 5px 0;
+    margin: 0;
+    min-width: 180px; /* Slightly wider for better text fit */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+}
+.deck-options-button-wrapper.menu-open .deck-context-menu { /* Target wrapper for menu-open */
+     opacity: 1;
+     visibility: visible;
+     transform: translateY(0);
+}
+.deck-context-menu li { margin: 0; padding: 0; }
+.deck-context-menu button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    text-align: left;
+    padding: 10px 15px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-gray-600); /* Menu item text color */
+    font-size: var(--font-size-sm); /* Slightly smaller font */
+    transition: background-color 0.1s ease, color 0.1s ease;
+}
+.deck-context-menu button i { margin-right: 10px; width: 15px; text-align: center; color: var(--color-gray-500); /* Icon color */ }
+.deck-context-menu button:hover {
+    background-color: var(--color-gray-200); /* Highlight background on hover */
+    color: var(--color-foreground); /* Darker text on hover */
+}
+.deck-context-menu .delete-option { color: var(--color-danger); }
+.deck-context-menu .delete-option i { color: var(--color-danger); }
+
+/* Styles for Tabs */
+.dashboard-tabs {
+    display: flex;
+    margin-bottom: var(--spacing-xl); /* Space below tabs */
+    border-bottom: 1px solid var(--color-gray-300);
+    padding-top: var(--spacing-sm); /* Add padding above tabs */
+}
+.tab-button {
+    padding: var(--spacing-md) var(--spacing-lg); /* Adjust padding */
+    cursor: pointer;
+    border: none;
+    background-color: transparent;
+    font-size: var(--font-size-md);
+    color: var(--color-gray-600); /* Default tab color */
+    border-bottom: 3px solid transparent;
+    margin-right: var(--spacing-md); /* Space between tabs */
+    transition: color 0.2s ease, border-bottom-color 0.2s ease;
+    margin-bottom: -1px; /* Pull border up to overlap parent border */
+    font-weight: 500;
+    display: flex; /* Align icon and text */
+    align-items: center;
+    gap: var(--spacing-xs); /* Space between icon and text */
+}
+.tab-button:hover {
+    color: var(--color-primary); /* Highlight color on hover */
+}
+.tab-button.active {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+    font-weight: 600;
+}
+.tab-content {
+    display: none;
+    /* Animation handled by inline script adding 'animate-in' class */
+}
+.tab-content.active {
+    display: block;
+    /* The 'animate-in' class will be added to trigger the animation */
+}
+
+
+/* Styles for Card Browser */
+.card-browser-section {
+     background-color: var(--color-gray-100); /* Section background */
+     border-radius: var(--border-radius-md);
+     box-shadow: var(--shadow-sm);
+     padding: var(--spacing-xl); /* Added padding to the section itself */
+     margin-bottom: var(--spacing-xl); /* Add space below section */
+}
+.card-browser-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md); /* Adjusted gap */
+    margin-bottom: var(--spacing-lg); /* Adjusted margin */
+    align-items: center;
+    padding: var(--spacing-md); /* Added padding */
+    background-color: var(--color-gray-200); /* Filter bar background */
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--color-gray-300);
+}
+.card-browser-filters input[type="search"],
+.card-browser-filters select {
+    padding: var(--spacing-sm) var(--spacing-md); /* Adjusted padding */
+    border: 1px solid var(--color-gray-400);
+    border-radius: var(--border-radius-sm);
+    color: var(--color-foreground);
+    font-size: var(--font-size-sm); /* Slightly smaller font */
+    background-color: var(--color-background); /* Use main background for inputs */
+    flex-grow: 1; /* Allow inputs/selects to grow */
+    min-width: 150px; /* Reduced min-width for flexibility */
+}
+ .card-browser-filters input[type="search"]::placeholder {
+    color: var(--color-gray-500);
+}
+.card-browser-filters input[type="search"] {
+    max-width: 300px; /* Limit search input width */
+}
+.card-browser-filters select[multiple] {
+    min-height: 80px; /* Fixed height for multiple select */
+    flex-basis: 200px; /* Suggest width for multiple select */
+}
+.card-browser-filters button {
+    flex-shrink: 0; /* Prevent buttons from shrinking */
+}
+
+.card-browser-actions {
+    margin-bottom: var(--spacing-lg); /* Adjusted margin */
+    display: flex;
+    align-items: center; /* Vertically align */
+    gap: var(--spacing-md); /* Adjusted gap */
+    padding: var(--spacing-sm) 0; /* Add vertical padding */
+    border-bottom: 1px solid var(--color-gray-300); /* Separator */
+}
+.card-browser-actions .btn {
+     padding: var(--spacing-sm) var(--spacing-md); /* Adjusted button padding */
+     font-size: var(--font-size-sm);
+}
+
+#selected-cards-count {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+}
+
+
+.card-results-container {
+    overflow-x: auto;
+}
+
+.card-results-table {
+    width: 100%;
+    border-collapse: separate; /* Use separate for rounded corners/spacing */
+    border-spacing: 0; /* Remove default spacing */
+    margin-top: var(--spacing-md); /* Add space if displayed after messages */
+    font-size: var(--font-size-sm); /* Consistent smaller font */
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--border-radius-sm);
+    overflow: hidden; /* Hide corners outside border-radius */
+}
+.card-results-table th,
+.card-results-table td {
+    border: 1px solid var(--color-gray-300);
+    padding: var(--spacing-sm) var(--spacing-md); /* Consistent padding */
+    text-align: left;
+    vertical-align: top; /* Align content to top */
+}
+.card-results-table th {
+    background-color: var(--color-gray-200);
+    font-weight: 600;
+    color: var(--color-gray-600); /* Header text color */
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid var(--color-gray-300); /* Thicker bottom border */
+}
+/* Border radius for first/last header and footer cells */
+.card-results-table th:first-child { border-top-left-radius: var(--border-radius-sm); }
+.card-results-table th:last-child { border-top-right-radius: var(--border-radius-sm); }
+/* If you have a tfoot, add border-bottom-radius */
+/* .card-results-table tfoot td:first-child { border-bottom-left-radius: var(--border-radius-sm); } */
+/* .card-results-table tfoot td:last-child { border-bottom-right-radius: var(--border-radius-sm); } */
+
+
+.card-results-table tbody tr:nth-child(even) {
+    background-color: var(--color-gray-100); /* Lighter for even rows */
+}
+ .card-results-table tbody tr:nth-child(odd) {
+    background-color: transparent; /* Main background for odd rows */
+}
+.card-results-table tbody tr {
+    transition: background-color var(--transition-fast);
+}
+.card-results-table tbody tr:hover {
+    background-color: rgba(var(--color-primary-rgb, 76, 201, 240), 0.05); /* Subtle highlight */
+}
+
+.card-results-table td input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+    vertical-align: top; /* Align checkbox nicely with top-aligned cell content */
+    transform: scale(1.1); /* Make checkbox slightly larger */
+    accent-color: var(--color-primary); /* Style checkbox color */
+}
+.card-results-table .card-content-cell {
+    max-width: 200px; /* Slightly reduced max width */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-gray-600); /* Content text color */
+}
+.card-results-table .card-content-cell:hover {
+    white-space: normal; /* Allow text to wrap on hover? Might break layout */
+    /* Or show tooltip on hover? (requires JS/tooltip library) */
+}
+
+.card-results-table .card-tags-cell {
+    min-width: 100px; /* Ensure tags column has min width */
+    max-width: 150px; /* Limit tags column width */
+    flex-wrap: wrap; /* Allow tags to wrap */
+}
+
+
+.tag-badge { /* For displaying tags within the table cell */
+    display: inline-block;
+    background-color: var(--color-secondary);
+    color: var(--color-background);
+    padding: 3px 8px;
+    border-radius: var(--border-radius-full); /* Pill shape */
+    font-size: 0.7rem; /* Very small font for badges */
+    font-weight: 600;
+    margin-right: 5px;
+    margin-bottom: 3px; /* For wrapping */
+    white-space: nowrap; /* Prevent breaking within tag */
+    text-transform: lowercase; /* Lowercase tags */
+}
+.no-tags {
+    font-style: italic;
+    color: var(--color-gray-500);
+}
+
+#loading-cards-message,
+#no-cards-found-message,
+#card-browser-initial-message {
+    padding: var(--spacing-xl); /* Increased padding */
+    text-align: center;
+    color: var(--color-gray-600);
+    background-color: var(--color-gray-200);
+    border-radius: var(--border-radius-md); /* Increased radius */
+    margin-top: var(--spacing-lg); /* Add space above */
+    box-shadow: var(--shadow-sm);
+    /* Animation handled by inline script */
+}
+#loading-cards-message i {
+    margin-right: var(--spacing-sm);
+    color: var(--color-primary); /* Loading icon color */
+}
+
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .stats-grid {
     grid-template-columns: 1fr;
+    gap: var(--spacing-md);
   }
 
   .decks-grid {
     grid-template-columns: 1fr;
+    gap: var(--spacing-md);
   }
+
+  .content-header {
+      flex-direction: column; /* Stack header items */
+      align-items: flex-start;
+      gap: var(--spacing-sm);
+  }
+
+  .dashboard-tabs {
+      flex-wrap: wrap; /* Allow tabs to wrap */
+      gap: var(--spacing-sm); /* Gap between wrapped tabs */
+  }
+  .tab-button {
+      margin-right: 0; /* Remove margin right when wrapping */
+      margin-bottom: var(--spacing-sm); /* Add margin below when wrapping */
+  }
+
+    .card-browser-filters {
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm);
+    }
+     .card-browser-filters input[type="search"],
+     .card-browser-filters select {
+        flex-basis: 100%; /* Stack filter elements */
+        max-width: 100%;
+     }
+    .card-browser-actions {
+        flex-direction: column; /* Stack actions */
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+     #selected-cards-count {
+         margin-left: 0;
+     }
+
+     .card-results-table th,
+     .card-results-table td {
+         padding: var(--spacing-sm); /* Reduced padding for smaller screens */
+     }
+
+     .card-results-table .card-content-cell {
+         max-width: 150px; /* Further reduce max width */
+     }
+     .card-results-table .card-tags-cell {
+         max-width: 100px;
+     }
+
 }
+
+/* Keyframes (Assuming in animation.css or global.css) */
+/* @keyframes fadeIn { ... } */
+/* @keyframes fadeInUp { ... } */
+
+/* Animation utility class (for inline JS to add) */
+.animate-in {
+    animation: fadeInUp 0.6s ease-out forwards; /* Apply animation */
+}
+
+/* Initial hidden state if not using display: none, but we are sticking to display:none initially */
+/* .initial-hidden {
+    opacity: 0;
+    transform: translateY(20px);
+} */

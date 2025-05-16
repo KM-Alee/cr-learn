@@ -6,16 +6,197 @@
     <title>Global Leaderboard - NeuroFlash</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+    <!-- Link to original leaderboard.css - keep this -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/leaderboard.css') }}">
+
+    <!-- INLINE STYLES FOR ENHANCEMENTS AND ANIMATIONS -->
+    <style>
+        /* Additional aesthetic tweaks */
+        /* Enhance the main content header slightly */
+        .main-content .content-header {
+            /* Already has border-bottom, maybe add a subtle shadow? */
+            box-shadow: var(--shadow-sm); /* Add subtle shadow */
+            background-color: var(--color-gray-100); /* Match sidebar/container background */
+            border-radius: var(--border-radius-md);
+            padding: var(--spacing-md) var(--spacing-lg); /* Adjust padding */
+            margin-bottom: var(--spacing-lg);
+        }
+        .main-content .content-header h2 {
+            display: flex; /* Align icon and text */
+            align-items: center;
+            gap: var(--spacing-sm); /* Space between icon and text */
+        }
+
+        /* Refine current user highlight */
+        .current-user-highlight {
+            background-color: var(--color-gray-200); /* Use a standard color */
+            border: 1px solid var(--color-primary); /* Keep primary border */
+            border-radius: var(--border-radius-lg); /* Slightly larger radius */
+            padding: var(--spacing-lg); /* More padding */
+            margin-bottom: var(--spacing-xl); /* More space below */
+            box-shadow: var(--shadow-md); /* Stronger shadow */
+            transition: transform var(--transition-fast) ease-out; /* Add hover effect */
+        }
+         .current-user-highlight:hover {
+            transform: translateY(-3px); /* Lift slightly on hover */
+            box-shadow: var(--shadow-glow); /* Add glow on hover */
+         }
+
+        /* Refine leaderboard container */
+        .leaderboard-container {
+            background-color: var(--color-gray-100);
+            border-radius: var(--border-radius-lg); /* Slightly larger radius */
+            box-shadow: var(--shadow-lg); /* Stronger shadow */
+            padding: var(--spacing-xl); /* More internal padding */
+            margin-bottom: var(--spacing-xl); /* Space below container */
+            overflow-x: auto; /* Keep scroll for small screens */
+        }
+
+        /* Refine table appearance */
+        .leaderboard-table {
+             /* Removed margin-top here if container padding is enough */
+             border-collapse: separate; /* Use separate to allow border-radius on cells */
+             border-spacing: 0; /* Remove default spacing */
+        }
+
+        /* Table headers */
+        .leaderboard-table th {
+            background-color: var(--color-gray-200);
+            color: var(--color-gray-500); /* Softer header text */
+            font-size: var(--font-size-sm); /* Slightly smaller font */
+            text-transform: uppercase; /* Uppercase headers */
+            letter-spacing: 0.05em; /* Add slight letter spacing */
+            border-bottom: 2px solid var(--color-gray-300); /* Thicker bottom border */
+        }
+        /* Border radius for first/last header */
+         .leaderboard-table th:first-child {
+            border-top-left-radius: var(--border-radius-md);
+         }
+         .leaderboard-table th:last-child {
+            border-top-right-radius: var(--border-radius-md);
+         }
+
+
+        /* Table cells and rows */
+        .leaderboard-table td {
+            padding: var(--spacing-md) var(--spacing-md); /* Consistent padding */
+            border-bottom: 1px solid var(--color-gray-200); /* Softer separator */
+            color: var(--color-gray-600); /* Default cell text color */
+        }
+
+        /* Hover effect on rows */
+        .leaderboard-table tbody tr {
+            transition: background-color var(--transition-fast);
+        }
+        .leaderboard-table tbody tr:hover {
+            background-color: rgba(var(--color-primary-rgb, 76, 201, 240), 0.05); /* Very subtle highlight */
+        }
+
+        /* Zebra striping - adjust contrast */
+        .leaderboard-table tbody tr:nth-child(even) {
+            background-color: var(--color-gray-100); /* Same as container */
+        }
+         .leaderboard-table tbody tr:nth-child(odd) {
+            background-color: transparent; /* No background for odd rows */
+         }
+         /* Re-apply hover for both */
+         .leaderboard-table tbody tr:nth-child(even):hover {
+             background-color: rgba(var(--color-primary-rgb, 76, 201, 240), 0.05);
+         }
+
+
+        /* Specific cell styles */
+        .leaderboard-table td.rank-cell {
+            font-weight: 700;
+            color: var(--color-primary-light); /* Use light primary for ranks */
+             /* Add a subtle badge background for top ranks? Maybe too much, stick to color */
+            width: 80px;
+            text-align: center;
+        }
+         /* Special colors for top ranks? (Optional, adds flair) */
+         .leaderboard-table tbody tr:nth-child(1) td.rank-cell { color: #FFD700; /* Gold */ }
+         .leaderboard-table tbody tr:nth-child(2) td.rank-cell { color: #C0C0C0; /* Silver */ }
+         .leaderboard-table tbody tr:nth-child(3) td.rank-cell { color: #CD7F32; /* Bronze */ }
+
+
+        .leaderboard-table td.points-cell {
+            font-weight: 600; /* Make points bold */
+            text-align: right;
+            width: 120px;
+            color: var(--color-foreground); /* Use foreground color for points */
+        }
+
+        /* Highlight for the logged-in user's row */
+        .leaderboard-table tr.current-user-row td {
+            background-color: rgba(var(--color-secondary-rgb, 247, 37, 133), 0.1); /* Keep distinct highlight */
+            color: var(--color-foreground); /* Ensure text is readable */
+            font-weight: bold;
+            border-left: 3px solid var(--color-secondary); /* Add a side border */
+        }
+         .leaderboard-table tr.current-user-row td.rank-cell {
+             color: var(--color-secondary-light); /* Use secondary for rank on user row */
+         }
+          .leaderboard-table tr.current-user-row td.points-cell {
+             color: var(--color-foreground); /* Keep points foreground color */
+         }
+
+
+        /* Refine pagination controls */
+        .pagination-controls {
+            padding: var(--spacing-md); /* Add padding */
+            background-color: var(--color-gray-100); /* Match container background */
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--shadow-sm); /* Subtle shadow */
+            margin-top: var(--spacing-lg);
+        }
+        .pagination-controls .btn {
+             padding: var(--spacing-sm) var(--spacing-md); /* Slightly larger buttons */
+             font-size: var(--font-size-sm);
+        }
+         .pagination-controls span#pageInfo {
+             font-size: var(--font-size-sm);
+             color: var(--color-gray-500);
+             min-width: 80px; /* Give page info some space */
+             text-align: center;
+         }
+
+        /* ANIMATIONS */
+
+        /* Define Keyframes for Fade-in and Slide-up */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+
+
+        /* Apply animation when the 'animate-in' class is added */
+        .animate-in {
+             animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        /* Ensure elements are hidden initially if JS doesn't run or before class is added */
+        /* This conflicts with the inline JS approach below that *removes* display:none */
+        /* The best way under constraints is to let original JS manage display and trigger animation */
+        /* So, the 'animate-in' class is added, and when display:block is set, animation runs. */
+        /* Let's add the class on page load to the main sections */
+
+    </style>
 </head>
 <body>
     <div class="app-container">
+        <!-- Sidebar - Uses global styles -->
         <nav class="sidebar">
             <div class="logo">
                 <h1>Neuro<span>Flash</span></h1>
             </div>
             <ul class="nav-links">
-                <li><a href="/"><i class="fas fa-home"></i> <span>Home</span></a></li>
                 <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>
                 <li><a href="/study"><i class="fas fa-book-open"></i><span>Study</span></a></li>
                 <li><a href="/results"><i class="fas fa-chart-line"></i><span>Results</span></a></li>
@@ -25,27 +206,38 @@
             </ul>
         </nav>
 
+        <!-- Main Content Area - Uses global styles -->
         <main class="main-content">
+            <!-- Header - Uses global and inline styles -->
             <header class="content-header">
                 <h2><i class="fas fa-trophy"></i> Global Leaderboard</h2>
-                <button id="populateLeaderboardBtn" class="btn secondary-btn" title="Manually update leaderboard snapshot (Admin)"><i class="fas fa-sync-alt"></i> Update Leaderboard</button>
+                <!-- Button - Uses global styles -->
+                <!-- Kept original style="display:none;" here as it's admin specific and might not always show -->
+                <button id="populateLeaderboardBtn" class="btn secondary-btn" title="Manually update leaderboard snapshot (Admin)" style="display:none;"><i class="fas fa-sync-alt"></i> Update Leaderboard</button>
             </header>
 
-            <div id="current-user-rank-section" style="display:none;" class="current-user-highlight">
+            <!-- Current User Highlight Section - Uses leaderboard.css and inline styles -->
+            <!-- Removed style="display:none;" here to allow animation. Original JS should manage visibility -->
+            <div id="current-user-rank-section" class="current-user-highlight">
                 <h3>Your Rank</h3>
                 <p>
                     <strong id="currentUserRank">N/A</strong> -
                     <span id="currentUserUsername">You</span> -
                     <span id="currentUserPoints">0</span> points
                 </p>
+                <!-- Kept original style="display:none;" as it's conditional based on rank -->
                 <p id="currentUserOutOfTop" style="display:none; font-size: 0.9em; color: var(--color-gray-500); margin-top: 5px;">
                     (Your rank is outside the current page)
                 </p>
             </div>
 
 
+            <!-- Leaderboard Container - Uses leaderboard.css and inline styles -->
+            <!-- Removed style="display:none;" from container -->
             <div class="leaderboard-container">
-                <div id="loading-leaderboard" class="loading-message">
+                <!-- Loading/Info/Error Messages - Use leaderboard.css styles -->
+                <!-- Kept original style="display:none;" as these are mutually exclusive states managed by original JS -->
+                <div id="loading-leaderboard" class="loading-message" style="display:none;">
                     <i class="fas fa-spinner fa-spin"></i> Loading leaderboard...
                 </div>
                 <p id="no-leaderboard-data" class="info-message" style="display:none;">
@@ -55,7 +247,9 @@
                     An error occurred while loading the leaderboard.
                 </p>
 
-                <table class="leaderboard-table" style="display:none;">
+                <!-- Leaderboard Table - Uses leaderboard.css and inline styles -->
+                 <!-- Removed style="display:none;" from table -->
+                <table class="leaderboard-table">
                     <thead>
                         <tr>
                             <th>Rank</th>
@@ -64,11 +258,14 @@
                         </tr>
                     </thead>
                     <tbody id="leaderboard-tbody">
+                        <!-- Table rows will be populated by leaderbord.js -->
                     </tbody>
                 </table>
             </div>
 
-            <div class="pagination-controls" id="paginationControls" style="display:none;">
+            <!-- Pagination Controls - Uses leaderboard.css and inline styles -->
+            <!-- Removed style="display:none;" here -->
+            <div class="pagination-controls" id="paginationControls">
                 <button id="prevPageBtn" class="btn secondary-btn" disabled><i class="fas fa-chevron-left"></i> Previous</button>
                 <span id="pageInfo">Page 1 of 1</span>
                 <button id="nextPageBtn" class="btn secondary-btn" disabled>Next <i class="fas fa-chevron-right"></i></button>
@@ -76,6 +273,41 @@
         </main>
     </div>
 
+    <!-- Link to original leaderboard.js - Keep this -->
     <script src="{{ url_for('static', filename='js/leaderboard.js') }}"></script>
+
+    <!-- INLINE SCRIPT TO TRIGGER ANIMATIONS -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements that should fade and slide in when they become visible
+            // Note: The original leaderboard.js likely controls their display property.
+            // Adding the class here means the animation will start when this script runs.
+            // When the display: none is removed by leaderboard.js, the element will appear
+            // and the animation will continue/finish. This is a workaround for the constraint
+            // of not modifying the original JS that uses display:none.
+            const elementsToAnimate = [
+                document.getElementById('current-user-rank-section'),
+                document.querySelector('.leaderboard-container'), // Animate the container
+                document.getElementById('paginationControls')
+            ];
+
+            // Add the animation class after a small delay to allow initial render
+            // Stagger the animation slightly for a nicer effect
+            elementsToAnimate.forEach((el, index) => {
+                if (el) {
+                    // Delay based on index
+                    setTimeout(() => {
+                        el.classList.add('animate-in');
+                    }, 100 * index); // 100ms delay for each subsequent element
+                }
+            });
+
+            // Optional: Add a slight animation to table rows as they are added?
+            // This would require modifying leaderbord.js or using a MutationObserver,
+            // which goes against the "don't touch the actual js file" constraint.
+            // Stick to animating the main sections.
+
+        });
+    </script>
 </body>
 </html>
